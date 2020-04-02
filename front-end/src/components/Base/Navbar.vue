@@ -5,9 +5,8 @@
       <div class="navbar-brand">
       <router-link to="/" class="g-text-underline--none--hover">
         <img src="../../assets/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
-          Design by 
       </router-link>
-      <a href="http://www.madmalls.com" class="g-text-underline--none--hover">Madman</a>
+      <a href="http://http://116.85.19.23/" class="g-text-underline--none--hover"> Madblog </a>
       </div>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -17,9 +16,6 @@
         <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
           <li class="nav-item active">
             <router-link to="/" class="nav-link">Home <span class="sr-only">(current)</span></router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/ping" class="nav-link">Ping</router-link>
           </li>
           <li class="nav-item" v-if="sharedState.is_authenticated && sharedState.user_perms.includes('admin')">
             <router-link to="/admin" class="nav-link">Admin</router-link>
