@@ -4,6 +4,7 @@ import Router from 'vue-router'
 import VueScrollTo from 'vue-scrollto'
 // 首页
 import Home from '@/components/Home'
+import HomeEbook from '@/components/HomeEbook'
 // 用户认证：注册、登录、验证账户、重置密码请求、重置密码
 import Register from '@/components/Auth/Register'
 import Login from '@/components/Auth/Login'
@@ -40,6 +41,7 @@ import CommentsLikes from '@/components/Notifications/CommentsLikes'
 import FollowingPosts from '@/components/Notifications/FollowingPosts'
 // 博客详情页
 import PostDetail from '@/components/PostDetail'
+
 // 管理后台
 import Admin from '@/components/Admin/Admin'
 import AdminRoles from '@/components/Admin/Roles'
@@ -53,7 +55,9 @@ import AdminComments from '@/components/Admin/Comments'
 import SearchResult from '@/components/SearchResult'
 // 测试与后端连通性
 import Ping from '@/components/Ping'
-
+import EbookTest from '@/components/EbookTest'
+import TestScroll from '@/components/TestScroll'
+import EbookDetail from '@/components/EbookDetail'
 
 Vue.use(Router)
 
@@ -133,7 +137,7 @@ const router = new Router({
       children: [
         // Overview will be rendered inside User's <router-view>
         // when /user/:id is matched
-        // 注意： 要有默认子路由，父路由不能指定 name
+        // Note: To have a default child route, the parent route cannot specify name
         { path: '', component: Overview },
         { path: 'overview', name: 'UserOverview', component: Overview },
 				
@@ -219,10 +223,16 @@ const router = new Router({
       }
     },
     {
-      // 博客文章详情页
+      // Blog post details page
       path: '/post/:id',
       name: 'PostDetail',
       component: PostDetail
+    },
+    {
+      // Ebook details page
+      path: '/ebook/:id',
+      name: 'EbookDetail',
+      component: EbookDetail
     },
     {
       // 管理后台
@@ -253,7 +263,24 @@ const router = new Router({
       path: '/ping',
       name: 'Ping',
       component: Ping
-    }
+    },
+    {
+      path: '/ebooktest',
+      name: 'EbookTest',
+      component: EbookTest
+    },
+    {
+      path: '/scroll',
+      name: 'TestScroll',
+      component: TestScroll
+    },
+    {
+      path: '/homeebook',
+      name: 'HomeEbook',
+      component: HomeEbook
+    },
+    
+
   ]
 })
 

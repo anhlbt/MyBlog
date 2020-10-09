@@ -17,7 +17,7 @@
           </router-link>
           <small class="g-font-size-12 g-color-deeporange">{{ member.followers_count }} followers</small>, <small class="g-font-size-12 g-color-aqua">{{ member.followeds_count }} following </small>
         </h5>
-        <p class="m-0">{{ $moment(member.timestamp).format('YYYY年MM月DD日 HH:mm:ss') }}</p>
+        <p class="m-0">{{ $moment(member.timestamp).format('YYYY/MM/DD HH:mm:ss') }}</p>
       </div>
       <div class="align-self-center ml-auto">
         <button v-if="member.is_following" v-on:click="$emit('unfollow-user')" class="btn btn-block u-btn-outline-red g-rounded-20 g-px-10">Unfollow</button>

@@ -1,6 +1,9 @@
+// import '@babel/polyfill'
+import 'mutationobserver-shim'
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
+// import './plugins/bootstrap-vue'
 import App from './App'
 import router from './router'
 // 导入配置了全局拦截器后的 axios
@@ -10,6 +13,7 @@ import moment from 'moment'
 // Import Bootstrap css and js files
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap'
+// import { BootstrapVue, IconsPlugin } from 'bootstrap-vue' //anhlbt
 // 字体图标
 import './assets/icon-line/css/simple-line-icons.css'
 import './assets/icon-line-pro/style.css'
@@ -25,12 +29,14 @@ import './assets/core.css'
 import './assets/custom.css'
 // vue-i18n 插件
 import i18n from './i18n'
+// import ScrollLoader from './plugin-entry'
+// Vue.use(ScrollLoaderPlugin)
 
 // register the vue-toasted plugin on vue
 import VueToasted from 'vue-toasted'
 Vue.use(VueToasted, {
   // 主题样式 primary/outline/bubble
-  theme: 'bubble',
+  theme: 'blue',//bubble
   // 显示在页面哪个位置
   position: 'top-center',
   // 显示多久时间（毫秒）
@@ -79,3 +85,4 @@ new Vue({
   components: { App },
   template: '<App/>'
 })
+

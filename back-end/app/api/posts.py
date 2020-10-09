@@ -5,13 +5,14 @@ from app.api.errors import error_response, bad_request
 from app.extensions import db
 from app.models import Permission, Post, Comment
 from app.utils.decorator import permission_required
-
+import pdb
 
 @bp.route('/posts/', methods=['POST'])
 @token_auth.login_required
 @permission_required(Permission.WRITE)
 def create_post():
     '''添加一篇新文章'''
+    # pdb.set_trace()
     data = request.get_json()
     if not data:
         return bad_request('You must post JSON data.')
@@ -49,20 +50,40 @@ def get_posts():
         request.args.get(
             'per_page', current_app.config['POSTS_PER_PAGE'], type=int), 100)
     data = Post.to_collection_dict(
-        Post.query.order_by(Post.timestamp.desc()), page, per_page,
-        'api.get_posts')
+        Post.query.order_by(Post.timestamp.desc()), page, per_page, 'api.get_posts')
     return jsonify(data)
+
+#get posts by topic
+@bp.route('/posts/<topic>', methods=['GET'])
+def get_post_by_topic(topic):
+    page = request.args.get('page', 1, type=int)
+    per_page = min(
+        request.args.get(
+            'per_page', current_app.config['POSTS_PER_PAGE'], type=int), 100)
+    data = Post.to_collection_dict(Post.query.filter(Post.topic == topic), page, per_page, 'api.get_post_by_topic', topic=topic)
+    return jsonify(data)
+
+
+# #get posts by except topic
+# @bp.route('/posts/<topic>', methods=['GET'])
+# def get_post_except_topic(topic):
+#     page = request.args.get('page', 1, type=int)
+#     per_page = min(
+#         request.args.get(
+#             'per_page', current_app.config['POSTS_PER_PAGE'], type=int), 10)
+#     data = Post.to_collection_dict(Post.query.filter(Post.topic != topic), page, per_page, 'api.get_post_except_topic', topic=topic)
+#     return jsonify(data)
 
 
 @bp.route('/posts/<int:id>', methods=['GET'])
 def get_post(id):
-    '''返回一篇文章'''
+    '''Return to an article'''
     post = Post.query.get_or_404(id)
     post.views += 1
     db.session.add(post)
     db.session.commit()
     data = post.to_dict()
-    # 下一篇文章
+    # Next article
     next_basequery = Post.query.order_by(Post.timestamp.desc()).filter(Post.timestamp > post.timestamp)
     if next_basequery.all():
         data['next_id'] = next_basequery[-1].id
@@ -90,6 +111,8 @@ def update_post(id):
         return error_response(403)
 
     data = request.get_json()
+    print(data)
+    # pdb.set_trace()
     if not data:
         return bad_request('You must post JSON data.')
     message = {}
@@ -195,11 +218,11 @@ def unlike_post(id):
 def export_posts():
     '''导出当前用户的所有文章，RQ 后台任务'''
     if g.current_user.get_task_in_progress('export_posts'):  # 如果用户已经有同名的后台任务在运行中时
-        return bad_request('上一个导出文章的后台任务尚未结束')
+        return bad_request('The background task of the last exported article has not ended')
     else:
         # 将 app.utils.tasks.export_posts 放入任务队列中
-        g.current_user.launch_task('export_posts', '正在导出文章...', kwargs={'user_id': g.current_user.id})
-        return jsonify(message='正在运行导出文章后台任务')
+        g.current_user.launch_task('export_posts', 'Exporting articles...', kwargs={'user_id': g.current_user.id})
+        return jsonify(message='Background task for exporting articles is running')
 
 
 ###

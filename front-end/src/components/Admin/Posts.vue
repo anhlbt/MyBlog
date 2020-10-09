@@ -3,7 +3,7 @@
     <!-- Panel Header -->
     <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
       <h3 class="h6 mb-0">
-        <i class="icon-people g-pos-rel g-top-1 g-mr-5"></i> 博客列表 <small v-if="posts">(共 {{ posts._meta.total_items }} 个, {{ posts._meta.total_pages }} 页)</small>
+        <i class="icon-people g-pos-rel g-top-1 g-mr-5"></i> Blog list <small v-if="posts">(Total {{ posts._meta.total_items }} , {{ posts._meta.total_pages }} Page)</small>
       </h3>
       <div class="dropdown g-mb-10 g-mb-0--md">
         <span class="d-block g-color-primary--hover g-cursor-pointer g-mr-minus-5 g-pa-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -11,19 +11,19 @@
         </span>
         <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
           <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 1 }}" class="dropdown-item g-px-10">
-            <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 个
+            <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 1 per page
           </router-link>
           <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 5 }}" class="dropdown-item g-px-10">
-            <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 5 个
+            <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 5 per page
           </router-link>
           <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 10 }}" class="dropdown-item g-px-10">
-            <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 个
+            <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 10 per page
           </router-link>
           
           <div class="dropdown-divider"></div>
 
           <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
-            <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 个
+            <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 20 per page
           </router-link>
           
         </div>
@@ -54,13 +54,13 @@
                 <router-link v-bind:to="{ name: 'PostDetail', params: { id: post.id } }" class="g-text-underline--none--hover">{{ post.title }}</router-link>
               </td>
               <td class="hidden-sm">
-                <span class="g-color-gray-dark-v4 g-font-size-12">{{ $moment(post.timestamp).format('YYYY年MM月DD日 HH:mm:ss') }}</span>
+                <span class="g-color-gray-dark-v4 g-font-size-12">{{ $moment(post.timestamp).format('YYYY/MM/DD HH:mm:ss') }}</span>
               </td>
               <td>
                 <router-link v-bind:to="{ path: `/user/${post.author.id}` }" class="g-text-underline--none--hover">{{ post.author.name || post.author.username }}</router-link>
               </td>
               <td>
-                <button v-on:click="onDeletePost(post)" class="btn btn-xs u-btn-outline-red">删除</button>
+                <button v-on:click="onDeletePost(post)" class="btn btn-xs u-btn-outline-red">delete</button>
               </td>
             </tr>
           
@@ -121,7 +121,7 @@ export default {
     onDeletePost (post) {
       this.$swal({
         title: "Are you sure?",
-        text: "该操作将彻底删除 [ " + post.title + " ], 请慎重",
+        text: "The operation will be completely deleted [ " + post.title + " ], Please be careful",
         type: "warning",
         showCancelButton: true,
         confirmButtonColor: '#3085d6',

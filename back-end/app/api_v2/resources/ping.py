@@ -5,5 +5,5 @@ from app.api_v2.common.utils import output_html
 
 class Ping(Resource):
     def get(self):
-        return {'message': 'Pong!'}
+        return {'message': 'Pong resful api!!!'}
         # return output_html(render_template_string('<h1>测试 Flask-RESTful 返回 HTML 文档</h1>'), 200)

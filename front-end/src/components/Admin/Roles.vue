@@ -1,11 +1,11 @@
 <template>
   <div>
-    <router-link v-bind:to="{ name: 'AdminAddRole' }" class="btn btn-outline-success g-mb-15">添加角色</router-link>
+    <router-link v-bind:to="{ name: 'AdminAddRole' }" class="btn btn-outline-success g-mb-15">Add role</router-link>
   
     <!-- Panel Header -->
     <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
       <h3 class="h6 mb-0">
-        <i class="icon-people g-pos-rel g-top-1 g-mr-5"></i> 角色列表 <small v-if="roles">(共 {{ roles._meta.total_items }} 个, {{ roles._meta.total_pages }} 页)</small>
+        <i class="icon-people g-pos-rel g-top-1 g-mr-5"></i> Role list <small v-if="roles">(Total {{ roles._meta.total_items }} , {{ roles._meta.total_pages }} Page)</small>
       </h3>
       <div class="dropdown g-mb-10 g-mb-0--md">
         <span class="d-block g-color-primary--hover g-cursor-pointer g-mr-minus-5 g-pa-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -13,19 +13,19 @@
         </span>
         <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
           <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 1 }}" class="dropdown-item g-px-10">
-            <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 个
+            <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 1 per page
           </router-link>
           <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 5 }}" class="dropdown-item g-px-10">
-            <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 5 个
+            <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 5 per page
           </router-link>
           <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 10 }}" class="dropdown-item g-px-10">
-            <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 个
+            <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 10 per page
           </router-link>
           
           <div class="dropdown-divider"></div>
 
           <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
-            <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 个
+            <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 20 per page
           </router-link>
           
         </div>
@@ -56,8 +56,8 @@
               <td class="hidden-sm">{{ role.name }}</td>
               <td>{{ role.permissions }}</td>
               <td>
-                <router-link v-bind:to="{ name: 'AdminEditRole', params: { id: role.id } }" class="btn btn-xs u-btn-outline-purple">编辑</router-link>
-                <button v-on:click="onDeleteRole(role)" class="btn btn-xs u-btn-outline-red">删除</button>
+                <router-link v-bind:to="{ name: 'AdminEditRole', params: { id: role.id } }" class="btn btn-xs u-btn-outline-purple">edit</router-link>
+                <button v-on:click="onDeleteRole(role)" class="btn btn-xs u-btn-outline-red">delete</button>
               </td>
             </tr>
           
@@ -118,7 +118,7 @@ export default {
     onDeleteRole(role) {
       this.$swal({
         title: "Are you sure?",
-        text: "该操作将彻底删除 [ " + role.name + " ], 请慎重",
+        text: "This operation will be completely deleted [ " + role.name + " ], Please be careful",
         type: "warning",
         showCancelButton: true,
         confirmButtonColor: '#3085d6',

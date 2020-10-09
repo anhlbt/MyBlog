@@ -7,14 +7,16 @@ def add_to_index(index, obj):
     if not current_app.elasticsearch:
         return
 
-    # 由于博客主要是中文的，所以使用 ik 中文分词插件。先要配置 Index 的 mapping
+    # 
+    # Since the blog is mainly in Chinese, the ik Chinese word segmentation plugin is used. The mapping of Index must be configured first
     if not current_app.elasticsearch.indices.exists(index=index):  # 如果是第一次插入，Index 还没创建
         # 创建 Index
         current_app.elasticsearch.indices.create(index=index, ignore=400)
-        # IK 模板，这里假设每个字段都用 text 类型，如果你要修改，也可以通过 __searchable__ 传递过来
+        # 
+        # IK template, it is assumed that each field uses text type, if you want to modify, you can also pass it through __searchable__
         chinese_field_config = {
             "type": "text",
-            "analyzer": "ik_max_word",
+            "analyzer": "ik_max_word", #whitespace
             "search_analyzer": "ik_max_word"
         }
 
@@ -27,7 +29,7 @@ def add_to_index(index, obj):
         }
         current_app.elasticsearch.indices.put_mapping(index=index, body=mapping)
 
-    # 插入新文档 (不管是不是第一次都要执行此步骤)
+    # Insert a new document (regardless of whether it is the first time to perform this step)
     payload = {}
     for field, _ in obj.__searchable__:
         payload[field] = getattr(obj, field)
@@ -57,7 +59,7 @@ def query_index(index, query, page, per_page, ids=None):
 
     # 中文分词器 ik 会将 query 拆分成哪些查找关键字，前端将通过正则表达式来高亮这些词
     analyze_body = {
-        "analyzer": "ik_max_word",
+        "analyzer": "whitespace", #we have many analyzwer, whitespace, standard, ik_max_word ...
         "text": query
     }
     tokens = current_app.elasticsearch.indices.analyze(index=index, body=analyze_body)

@@ -7,7 +7,7 @@ from app.extensions import db
 from app.models import User, Post, Message, Task
 from app.utils.email import send_email
 from config import Config
-
+import pdb
 
 # RQ worker 在我们的博客Flask应用之外运行，所以需要创建自己的应用实例
 app = create_app(Config)
@@ -23,6 +23,17 @@ def test_rq(num):
     print('Task completed')
     return 'Done'
 
+def example(seconds):
+    job = get_current_job()
+    print('Starting task')
+    for i in range(seconds):
+        job.meta['progress'] = 100.0 * i / seconds
+        job.save_meta()
+        print(i)
+        time.sleep(1)
+    job.meta['progress'] = 100
+    job.save_meta()
+    print('Task completed')
 
 def _set_task_progress(progress):
     job = get_current_job()  # 当前后台任务
@@ -50,7 +61,8 @@ def send_messages(*args, **kwargs):
         # 接收方
         recipients = User.query.filter(User.id != kwargs.get('user_id'))
         total_recipients = recipients.count()
-
+        print("+"*10, recipients)
+        # pdb.set_trace()
         for user in recipients:
             message = Message()
             message.body = kwargs.get('body')
@@ -66,7 +78,7 @@ def send_messages(*args, **kwargs):
             Dear {},
             {}
             Sincerely,
-            The Madblog Team
+            The Anhlbt's Blog
             Note: replies to this email address are not monitored.
             '''.format(user.username, message.body)
 
@@ -74,18 +86,18 @@ def send_messages(*args, **kwargs):
             <p>Dear {0},</p>
             <p>{1}</p>
             <p>Sincerely,</p>
-            <p>The Madblog Team</p>
+            <p>The Anhlbt's blog Team</p>
             <p><small>Note: replies to this email address are not monitored.</small></p>
             '''.format(user.username, message.body)
-            '''
-            # 后台任务已经是异步了，所以send_email()没必要再用多线程异步，所以这里指定了 sync=True
-            send_email('[Madblog] 温馨提醒',
+            
+            # Background tasks are already asynchronous, so send_email() There is no need to use multi-threaded asynchrony, so here is specified sync=True
+            send_email("[Anhlbt's blog] Reminder",
                        sender=app.config['MAIL_SENDER'],
                        recipients=[user.email],
                        text_body=text_body,
                        html_body=html_body,
                        sync=True)
-            '''
+            
             # 模拟长时间的后台任务
             time.sleep(3)
 
@@ -96,7 +108,7 @@ def send_messages(*args, **kwargs):
         admin = User.query.filter_by(email=app.config['ADMINS'][0]).first()
         if sender != admin:  # 不能自己给自己发送私信
             message = Message()
-            message.body = '[群发私信]已完成, 内容: \n\n' + kwargs.get('body')
+            message.body = '[Bulk Private Message] completed, content: \n\n' + kwargs.get('body')
             message.sender = admin
             message.recipient = sender
             db.session.add(message)
@@ -105,7 +117,7 @@ def send_messages(*args, **kwargs):
             db.session.commit()
 
     except Exception:
-        app.logger.error('[群发私信]后台任务出错了', exc_info=sys.exc_info())
+        app.logger.error('[Bulk Private Message] An error occurred in the background task', exc_info=sys.exc_info())
 
 
 def export_posts(*args, **kwargs):
@@ -128,7 +140,7 @@ def export_posts(*args, **kwargs):
         Dear {},
         Please find attached the archive of your posts that you requested.
         Sincerely,
-        The Madblog Team
+        The Anhlbt's blog
         Note: replies to this email address are not monitored.
         '''.format(user.username)
 
@@ -136,11 +148,11 @@ def export_posts(*args, **kwargs):
         <p>Dear {0},</p>
         <p>Please find attached the archive of your posts that you requested.</p>
         <p>Sincerely,</p>
-        <p>The Madblog Team</p>
+        <p>The Anhlbt's blog Team</p>
         <p><small>Note: replies to this email address are not monitored.</small></p>
         '''.format(user.username)
-        '''
-        send_email('[Madblog] 导出文章',
+        
+        send_email("[Anhlbt's blog] Export articles",
                    sender=app.config['MAIL_SENDER'],
                    recipients=[user.email],
                    text_body=text_body,
@@ -148,7 +160,7 @@ def export_posts(*args, **kwargs):
                    attachments=[('posts.json', 'application/json',
                                  json.dumps({'posts': data}, indent=4))],
                    sync=True)
-        '''
+        
     except Exception:
         _set_task_progress(100)
-        app.logger.error('[导出文章]后台任务出错了', exc_info=sys.exc_info())
+        app.logger.error('[Export article] An error occurred in the background task', exc_info=sys.exc_info())

@@ -17,7 +17,7 @@ function loadLocaleMessages () {
 }
 
 export default new VueI18n({
-  locale: 'zh',  // 设置本地的语言代号
-  fallbackLocale: 'en',  // 回退的语言代号
+  locale: 'en',  // Set local language code
+  fallbackLocale: 'en',  // The language code of the rollback
   messages: loadLocaleMessages()  // 翻译的源文件在哪
 })

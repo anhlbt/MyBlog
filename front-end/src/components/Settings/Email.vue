@@ -1,6 +1,6 @@
 <template>
   <div>
-    Email: 修改用户邮箱地址 (敬请期待)
+    Email: Modify user email address (please stay tuned)
   </div>
 </template>
 

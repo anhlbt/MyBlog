@@ -1,6 +1,6 @@
 <template>
   <div>
-    Notifications: 用户可以定制接收哪些提醒 (敬请期待)
+    Notifications: Users can customize which reminders they receive (please stay tuned)
   </div>
 </template>
 

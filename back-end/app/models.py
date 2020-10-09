@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for, current_app
 from app.extensions import db
 from app.utils.elasticsearch import add_to_index, remove_from_index, query_index, es_highlight
+from sqlalchemy.ext import mutable
 
 
 class SearchableMixin(object):
@@ -16,7 +17,7 @@ class SearchableMixin(object):
         total, hits, highlights = query_index(cls.__tablename__, query, page, per_page, ids)
 
         if total == 0:
-            return 0, cls.query.filter_by(id=0)  # 如果没有匹配到搜索词，则故意返回空的 BaseQuery
+            return 0, cls.query.filter_by(id=0)  # If there is no match for the search term, deliberately return empty BaseQuery
 
         hit_ids = []  # 匹配到的记录，id 列表
         when = []
@@ -175,10 +176,10 @@ class Role(PaginatedAPIMixin, db.Model):
         以后如果要想添加新角色，或者修改角色的权限，修改 roles 数组，再运行函数即可
         '''
         roles = {
-            'shutup': ('小黑屋', ()),
-            'reader': ('读者', (Permission.FOLLOW, Permission.COMMENT)),
-            'author': ('作者', (Permission.FOLLOW, Permission.COMMENT, Permission.WRITE)),
-            'administrator': ('管理员', (Permission.FOLLOW, Permission.COMMENT, Permission.WRITE, Permission.ADMIN)),
+            'shutup': ('Little Black House', ()),
+            'reader': ('Reader', (Permission.FOLLOW, Permission.COMMENT)),
+            'author': ('Author', (Permission.FOLLOW, Permission.COMMENT, Permission.WRITE)),
+            'administrator': ('Administrator', (Permission.FOLLOW, Permission.COMMENT, Permission.WRITE, Permission.ADMIN)),
         }
         default_role = 'reader'
         for r in roles:  # r 是字典的键
@@ -248,6 +249,7 @@ class User(PaginatedAPIMixin, db.Model):
     name = db.Column(db.String(64))
     location = db.Column(db.String(64))
     about_me = db.Column(db.Text())
+    image = db.Column(db.String(128), nullable=True)#anhlbt
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     # 反向引用，直接查询出当前用户的所有博客文章; 同时，Post实例中会有 author 属性
@@ -322,6 +324,7 @@ class User(PaginatedAPIMixin, db.Model):
             'name': self.name,
             'location': self.location,
             'about_me': self.about_me,
+            'image':self.image,
             'member_since': self.member_since.isoformat() + 'Z',
             'last_seen': self.last_seen.isoformat() + 'Z',
             'followeds_count': self.followeds.count(),
@@ -399,7 +402,9 @@ class User(PaginatedAPIMixin, db.Model):
         return User.query.get(payload.get('user_id'))
 
     def is_following(self, user):
-        '''判断当前用户是否已经关注了 user 这个用户对象，如果关注了，下面表达式左边是1，否则是0'''
+        '''Determine whether the current user has paid attention to the user object user, \
+            if it is concerned, the left side of the following expression is 1, \
+                otherwise it is 0'''
         return self.followeds.filter(
             followers.c.followed_id == user.id).count() > 0
 
@@ -515,7 +520,7 @@ class User(PaginatedAPIMixin, db.Model):
             for u in p.likers:
                 if u != self:  # 用户自己喜欢自己的文章不需要被通知
                     res = db.engine.execute("select * from posts_likes where user_id={} and post_id={}".format(u.id, p.id))
-                    timestamp = datetime.strptime(list(res)[0][2], '%Y-%m-%d %H:%M:%S.%f')
+                    timestamp = datetime.strptime(str(list(res)[0][2]), '%Y-%m-%d %H:%M:%S.%f')
                     # 判断本条喜欢记录是否为新的
                     if timestamp > last_read_time:
                         new_likes_count += 1
@@ -609,13 +614,39 @@ class User(PaginatedAPIMixin, db.Model):
         return '<User {}>'.format(self.username)
 
 
+class JsonEncodedDict(db.TypeDecorator):
+    """Enables JSON storage by encoding and decoding on the fly."""
+    impl = db.Text
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return '{}'
+        else:
+            return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return {}
+        else:
+            return json.loads(value)
+
+
+mutable.MutableDict.associate_with(JsonEncodedDict)
+
 class Post(SearchableMixin, PaginatedAPIMixin, db.Model):
     __tablename__ = 'posts'
     __searchable__ = [('title', True), ('summary', True), ('body', False)]
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255))
+    title = db.Column(db.String(500))
+    topic = db.Column(db.String(64))
+    tags = db.Column(db.String(500))
+    link_= db.Column(db.String(500))
+    source = db.Column(db.String(500))
+    audio_links = db.Column(db.PickleType)
     summary = db.Column(db.Text)
+    image = db.Column(db.PickleType, nullable=True)#anhlbt
     body = db.Column(db.Text)
+    json_book = db.Column(JsonEncodedDict)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     views = db.Column(db.Integer, default=0)
     # 外键, 直接操纵数据库当user下面有posts时不允许删除user，下面仅仅是 ORM-level “delete” cascade
@@ -632,18 +663,20 @@ class Post(SearchableMixin, PaginatedAPIMixin, db.Model):
     @staticmethod
     def on_changed_body(target, value, oldvalue, initiator):
         '''
-        target: 有监听事件发生的 Post 实例对象
-        value: 监听哪个字段的变化
+        target: Post instance objects that listen for events
+        value: Monitor which field changes
         '''
-        if not target.summary:  # 如果前端不填写摘要，是空str，而不是None
-            target.summary = value[:200] + '  ... ...'  # 截取 body 字段的前200个字符给 summary
+        if not target.summary:  # If the front end does not fill in the summary, it is empty str, not None
+            target.summary = value[:200] + '  ... ...'  # Intercept the first 200 characters of the body field to summary
 
     def to_dict(self):
         data = {
             'id': self.id,
             'title': self.title,
             'summary': self.summary,
+            'image':self.image,
             'body': self.body,
+            'json_book':self.json_book,
             'timestamp': self.timestamp,
             'views': self.views,
             'likers_id': [user.id for user in self.likers],
@@ -667,7 +700,11 @@ class Post(SearchableMixin, PaginatedAPIMixin, db.Model):
                 'self': url_for('api.get_post', id=self.id),
                 'author_url': url_for('api.get_user', id=self.author_id),
                 'comments': url_for('api.get_post_comments', id=self.id)
-            }
+            },
+            'source': self.source,
+            'tags': self.tags,
+            'topic': self.topic,
+            'audio_links': self.audio_links
         }
         return data
 

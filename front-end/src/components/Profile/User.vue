@@ -1,20 +1,20 @@
 <template>
   <section>
     <!-- Modal: Send Messages -->
+    
     <div data-backdrop="static" class="modal fade" id="sendMessagesModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">群发私信</h5>
+            <h5 class="modal-title">Send a private message...</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
           <div class="modal-body">
-          
             <form id="sendMessagesForm" @submit.prevent="onSubmitSendMessages" @reset.prevent="onResetSendMessages">
               <div class="form-group">
-                <textarea v-model="sendMessagesForm.body" class="form-control" id="sendMessagesFormBody" rows="5" placeholder=" 内容"></textarea>
+                <textarea v-model="sendMessagesForm.body" class="form-control" id="sendMessagesFormBody" rows="5" placeholder=" Content"></textarea>
                 <small class="form-control-feedback" v-show="sendMessagesForm.bodyError">{{ sendMessagesForm.bodyError }}</small>
               </div>
               <button type="reset" class="btn btn-secondary">Cancel</button>
@@ -57,7 +57,7 @@
               <i class="icon-user-unfollow g-pos-rel g-top-1 g-mr-5"></i> Unfollow
             </button>
 
-            <router-link v-if="$route.params.id == sharedState.user_id && $route.params.id != sharedState.user_id" v-bind:to="{ name: 'MessagesHistoryResource', query: { from: $route.params.id } }" class="btn btn-block u-btn-outline-purple g-rounded-50 g-py-12 g-mb-10">
+            <router-link v-if="$route.params.id != sharedState.user_id && $route.params.id != sharedState.user_id" v-bind:to="{ name: 'MessagesHistoryResource', query: { from: $route.params.id } }" class="btn btn-block u-btn-outline-purple g-rounded-50 g-py-12 g-mb-10">
               <i class="icon-bubble g-pos-rel g-top-1 g-mr-5"></i> Send private message
             </router-link>
 
@@ -98,7 +98,7 @@
               </li>
             </ul>
 
-            <!-- 嵌套的子路由出口 -->
+            <!-- Nested sub-route exit -->
             <router-view></router-view>
 
           </div>
@@ -126,14 +126,14 @@
 
       <form id="addPostForm" v-if="sharedState.is_authenticated && $route.params.id == sharedState.user_id && sharedState.user_perms.includes('write')" @submit.prevent="onSubmitAddPost" class="g-mb-40">
         <div class="form-group" v-bind:class="{'u-has-error-v1': postForm.titleError}">
-          <input type="text" v-model="postForm.title" class="form-control" id="postFormTitle" placeholder="标题">
+          <input type="text" v-model="postForm.title" class="form-control" id="postFormTitle" placeholder=" title">
           <small class="form-control-feedback" v-show="postForm.titleError">{{ postForm.titleError }}</small>
         </div>
         <div class="form-group">
-          <input type="text" v-model="postForm.summary" class="form-control" id="postFormSummary" placeholder="摘要">
+          <input type="text" v-model="postForm.summary" class="form-control" id="postFormSummary" placeholder=" summary">
         </div>
         <div class="form-group">
-          <textarea v-model="postForm.body" class="form-control" id="postFormBody" rows="5" placeholder=" 内容"></textarea>
+          <textarea v-model="postForm.body" class="form-control" id="postFormBody" rows="5" placeholder=" content"></textarea>
           <small class="form-control-feedback" v-show="postForm.bodyError">{{ postForm.bodyError }}</small>
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
@@ -349,6 +349,7 @@ export default {
         .then((response) => {
           // 重新加载，看看没有有后台任务Alert
           this.get_user_tasks_in_progress(this.$route.params.id)
+          // this.get_user_tasks_in_progress(sharedState.user_id) //#anhlbt
           // 先隐藏 Modal
           $('#sendMessagesModal').modal('hide')
 
@@ -435,7 +436,7 @@ export default {
         autofocus:false,
         savable:false,
         iconlibrary: 'fa',  // 使用Font Awesome图标
-        language: 'zh'
+        language: 'en'
       })
     })
   },

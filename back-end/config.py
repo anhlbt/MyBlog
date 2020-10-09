@@ -33,4 +33,4 @@ class Config(object):
     # Flask-Babel
     BABEL_DEFAULT_LOCALE = 'en'
     BABEL_DEFAULT_TIMEZONE = 'UTC'
-    LANGUAGES = ['zh', 'en']
+    LANGUAGES = ['vn', 'en']

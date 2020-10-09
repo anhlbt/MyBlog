@@ -14,14 +14,14 @@
           
             <form id="editPostForm" @submit.prevent="onSubmitUpdatePost" @reset.prevent="onResetUpdatePost">
               <div class="form-group" v-bind:class="{'u-has-error-v1': editPostForm.titleError}">
-                <input type="text" v-model="editPostForm.title" class="form-control" id="editPostFormTitle" placeholder="标题">
+                <input type="text" v-model="editPostForm.title" class="form-control" id="editPostFormTitle" placeholder="Title">
                 <small class="form-control-feedback" v-show="editPostForm.titleError">{{ editPostForm.titleError }}</small>
               </div>
               <div class="form-group">
-                <input type="text" v-model="editPostForm.summary" class="form-control" id="editPostFormSummary" placeholder="摘要">
+                <input type="text" v-model="editPostForm.summary" class="form-control" id="editPostFormSummary" placeholder="Summary">
               </div>
               <div class="form-group">
-                <textarea v-model="editPostForm.body" class="form-control" id="editPostFormBody" rows="5" placeholder=" 内容"></textarea>
+                <textarea v-model="editPostForm.body" class="form-control" id="editPostFormBody" rows="5" placeholder="Content"></textarea>
                 <small class="form-control-feedback" v-show="editPostForm.bodyError">{{ editPostForm.bodyError }}</small>
               </div>
               <button type="reset" class="btn btn-secondary">Cancel</button>
@@ -38,7 +38,7 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> User Posts <small v-if="posts">(共 {{ posts._meta.total_items }} 篇, {{ posts._meta.total_pages }} 页)</small>
+          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> User Posts <small v-if="posts">(Total {{ posts._meta.total_items }} article, {{ posts._meta.total_pages }} Page)</small>
         </h3>
         <div class="dropdown g-mb-10 g-mb-0--md">
           <span class="d-block g-color-primary--hover g-cursor-pointer g-mr-minus-5 g-pa-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -47,19 +47,19 @@
           <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
             
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 1 }}" class="dropdown-item g-px-10">
-              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 篇
+              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 1 per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 5 }}" class="dropdown-item g-px-10">
-              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 5 篇
+              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 5 per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 10 }}" class="dropdown-item g-px-10">
-              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 篇
+              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 10 per page
             </router-link>
 
             <div class="dropdown-divider"></div>
 
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
-              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 篇
+              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 20 per page
             </router-link>
             
           </div>
@@ -233,7 +233,7 @@ export default {
     onDeletePost (post) {
       this.$swal({
         title: "Are you sure?",
-        text: "该操作将彻底删除 [ " + post.title + " ], 请慎重",
+        text: "The operation will be completely deleted [ " + post.title + " ], Please be careful",
         type: "warning",
         showCancelButton: true,
         confirmButtonColor: '#3085d6',

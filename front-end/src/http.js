@@ -8,7 +8,7 @@ import store from './store'
 if (process.env.NODE_ENV === 'production') {
   axios.defaults.baseURL = 'http://116.85.19.23:5000';
 } else {
-  axios.defaults.baseURL = 'http://127.0.0.1:5000';
+  axios.defaults.baseURL = 'http://192.168.1.7:5000'; //172.16.2.215   192.168.1.239  localhost
 }
 // axios.defaults.baseURL = 'http://127.0.0.1:5000'
 // axios.defaults.timeout = 5000  // 超时时间（毫秒）
@@ -44,7 +44,7 @@ axios.interceptors.response.use(function (response) {
         store.logoutAction()
         // 跳转到登录页
         if (router.currentRoute.path !== '/login') {
-          Vue.toasted.error('401: 认证已失效，请先登录', { icon: 'fingerprint' })
+          Vue.toasted.error('401: Authentication has expired, please log in first', { icon: 'fingerprint' })
           router.replace({
             path: '/login',
             query: { redirect: router.currentRoute.path },

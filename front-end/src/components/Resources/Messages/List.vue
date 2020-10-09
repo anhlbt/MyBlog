@@ -5,7 +5,7 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Sent Messages <small v-if="messages">(共 {{ messages._meta.total_items }} 条, {{ messages._meta.total_pages }} 页)</small>
+          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Sent Messages <small v-if="messages">(Total {{ messages._meta.total_items }} article, {{ messages._meta.total_pages }} Page)</small>
         </h3>
         <div class="dropdown g-mb-10 g-mb-0--md">
           <span class="d-block g-color-primary--hover g-cursor-pointer g-mr-minus-5 g-pa-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -14,19 +14,19 @@
           <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
             
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 1 }}" class="dropdown-item g-px-10">
-              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 条
+              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 1 per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 5 }}" class="dropdown-item g-px-10">
-              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 5 条
+              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 5 per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 10 }}" class="dropdown-item g-px-10">
-              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 条
+              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 10 per page
             </router-link>
             
             <div class="dropdown-divider"></div>
             
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
-              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 条
+              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 20 per page
             </router-link>
             
           </div>
@@ -48,17 +48,17 @@
         </div>
         <div class="align-self-center g-px-10">
           <h5 class="h5 g-color-gray-dark-v1 mb-0">
-            <small class="g-font-size-12 g-color-aqua g-mr-5">你给</small>
+            <small class="g-font-size-12 g-color-aqua g-mr-5">you give</small>
             <router-link v-bind:to="{ path: `/user/${message.recipient.id}` }" class="g-text-underline--none--hover">
               <span class="g-mr-5">{{ message.recipient.name || message.recipient.username }}</span>
             </router-link>
-            <small class="g-font-size-12 g-color-aqua g-mr-5">发送了 {{ message.total_count }} 条私信, </small> <small v-if="message.new_count" class="g-font-size-12 g-color-deeporange"> {{ message.new_count }}条未读</small>
+            <small class="g-font-size-12 g-color-aqua g-mr-5">sent {{ message.total_count }} Private letter, </small> <small v-if="message.new_count" class="g-font-size-12 g-color-deeporange"> {{ message.new_count }}Unread</small>
           </h5>
-          <p class="m-0">{{ $moment(message.timestamp).format('YYYY年MM月DD日 HH:mm:ss') }}</p>
+          <p class="m-0">{{ $moment(message.timestamp).format('YYYY/MM/DD HH:mm:ss') }}</p>
         </div>
         <div class="align-self-center ml-auto">
           <router-link v-bind:to="{ name: 'MessagesHistoryResource', query: { from: message.recipient.id } }">
-            <button class="btn btn-block u-btn-outline-primary g-rounded-20 g-px-10">聊天记录</button>
+            <button class="btn btn-block u-btn-outline-primary g-rounded-20 g-px-10">chat record</button>
           </router-link>
         </div>
       </div>

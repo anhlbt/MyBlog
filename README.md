@@ -10,8 +10,6 @@
 
 
 
-# 1. 如何使用
-
 ## 1.1 git clone
 
 ```bash
@@ -97,3 +95,17 @@ $ npm run dev
 浏览器访问: `http://localhost:8080/#/register` 注册你的管理员账号 (注册时填写的 Email 在配置文件 `config.py` 的 `ADMINS` 中即可！)
 
 然后登录你的这个邮箱，去激活账号。Have fun
+
+https://madmalls.com/blog/post/latest-code/
+
+
+**change new database**
+create new database
+<!-- flask db init
+flask db migrate -->
+flask db upgrade
+flask deploy
+
+**crawl data baomoi**
+cd directory: baomoicrawler
+run: scrapy crawl baomoispider

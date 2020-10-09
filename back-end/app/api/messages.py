@@ -5,7 +5,7 @@ from app.api.errors import error_response, bad_request
 from app.extensions import db
 from app.models import User, Message
 from app.utils.decorator import admin_required
-
+import pdb
 
 @bp.route('/messages/', methods=['POST'])
 @token_auth.login_required
@@ -100,14 +100,17 @@ def delete_message(id):
 @admin_required
 def send_messages():
     '''群发私信'''
-    if g.current_user.get_task_in_progress('send_messages'):  # 如果用户已经有同名的后台任务在运行中时
-        return bad_request('上一个群发私信的后台任务尚未结束')
+    # print("* "*10, g.current_user.id) #1, is admin
+    # pdb.set_trace()
+    if g.current_user.get_task_in_progress('send_messages'):  # If the user already has a background task with the same name running
+        return bad_request('The background task of the last group private message has not ended')
     else:
         data = request.get_json()
         if not data:
             return bad_request('You must post JSON data.')
         if 'body' not in data or not data.get('body'):
             return bad_request(message={'body': 'Body is required.'})
-        # 将 app.utils.tasks.send_messages 放入任务队列中
-        g.current_user.launch_task('send_messages', '正在群发私信...', kwargs={'user_id': g.current_user.id, 'body': data.get('body')})
-        return jsonify(message='正在运行群发私信后台任务')
+        #  app.utils.tasks.send_messages Put in task queue
+        # g.current_user.launch_task("example", "call test rq...",kwargs={'seconds':10})
+        g.current_user.launch_task('send_messages', 'Sending private messages in bulk...', kwargs={'user_id': g.current_user.id, 'body': data.get('body')})
+        return jsonify(message='Background task of group sending private message is running')

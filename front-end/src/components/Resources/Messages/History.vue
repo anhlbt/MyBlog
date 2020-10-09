@@ -5,7 +5,7 @@
     <!-- Panel Header -->
     <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
       <h3 class="h6 mb-0">
-        <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> 与 <router-link v-bind:to="{ path: `/user/${user.id}` }" class="g-text-underline--none--hover">{{ user.name || user.username }}</router-link> 的对话 <small v-if="messages">(共 {{ messages._meta.total_items }} 条, {{ messages._meta.total_pages }} 页)</small>
+        <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> versus <router-link v-bind:to="{ path: `/user/${user.id}` }" class="g-text-underline--none--hover">{{ user.name || user.username }}</router-link> Conversation <small v-if="messages">(Total {{ messages._meta.total_items }} article, {{ messages._meta.total_pages }} Page)</small>
       </h3>
       <div class="dropdown g-mb-10 g-mb-0--md">
         <span class="d-block g-color-primary--hover g-cursor-pointer g-mr-minus-5 g-pa-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -14,22 +14,22 @@
         <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
           
           <router-link v-bind:to="{ name: 'MessagesIndexResource' }" class="dropdown-item g-px-10">
-            <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 返回已发私信列表
+            <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> Return to the list of sent private messages
           </router-link>
 
           <div class="dropdown-divider"></div>
 
           <router-link v-bind:to="{ path: $route.fullPath, query: { page: 1, per_page: 1 }}" class="dropdown-item g-px-10">
-            <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 条
+            <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 1 per page
           </router-link>
           <router-link v-bind:to="{ path: $route.fullPath, query: { page: 1, per_page: 5 }}" class="dropdown-item g-px-10">
-            <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 5 条
+            <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 5 per page
           </router-link>
           <router-link v-bind:to="{ path: $route.fullPath, query: { page: 1, per_page: 10 }}" class="dropdown-item g-px-10">
-            <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 条
+            <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 10 per page
           </router-link>          
           <router-link v-bind:to="{ path: $route.fullPath, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
-            <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 条
+            <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 20 per page
           </router-link>
           
         </div>
@@ -75,7 +75,7 @@
             <!-- Chat. Message Area. Message Time -->
             <em class="d-flex align-self-center align-items-center g-font-style-normal g-color-gray-light-v1 g-ml-50">
               <i class="hs-admin-time icon-clock g-mr-5"></i>
-              <small>{{ $moment(message.timestamp).format('YYYY年MM月DD日 HH:mm:ss') }}</small>
+              <small>{{ $moment(message.timestamp).format('YYYY/MM/DD HH:mm:ss') }}</small>
               <i v-if="!message.is_new" class="icon-check g-font-size-10 g-color-lightblue-v3 g-ml-12"></i>
             </em>
             <!-- End Chat. Message Area. Message Time -->
@@ -115,7 +115,7 @@
             <!-- Chat. Message Area. Message Time -->
             <em class="d-flex align-self-center align-items-center justify-content-end g-font-style-normal g-color-gray-light-v1">
               <i class="hs-admin-time icon-clock g-mr-5"></i>
-              <small>{{ $moment(message.timestamp).format('YYYY年MM月DD日 HH:mm:ss') }}</small>
+              <small>{{ $moment(message.timestamp).format('YYYY/MM/DD HH:mm:ss') }}</small>
               <i v-if="!message.is_new" class="icon-check g-font-size-10 g-color-lightblue-v3 g-ml-12"></i>
             </em>
             <!-- End Chat. Message Area. Message Time -->
@@ -141,7 +141,7 @@
   <!-- Reply Message Form -->
   <form id="replyMessageForm" @submit.prevent="onSubmitReply" @reset.prevent="onResetReply" class="g-mb-40">
     <div class="form-group">
-      <textarea v-model="replyMessageForm.body" class="form-control" id="replyMessageFormBody" rows="5" placeholder=" 悄悄话..."></textarea>
+      <textarea v-model="replyMessageForm.body" class="form-control" id="replyMessageFormBody" rows="5" placeholder=" text now ..."></textarea>
       <small class="form-control-feedback" v-show="replyMessageForm.bodyError">{{ replyMessageForm.bodyError }}</small>
     </div>
     <button type="reset" class="btn btn-secondary">Cancel</button>

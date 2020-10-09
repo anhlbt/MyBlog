@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-
+    
     <!-- Modal: Edit Post -->
     <div data-backdrop="static" class="modal fade" id="editPostModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -15,14 +15,14 @@
           
             <form id="editPostForm" @submit.prevent="onSubmitUpdatePost" @reset.prevent="onResetUpdatePost">
               <div class="form-group" v-bind:class="{'u-has-error-v1': editPostForm.titleError}">
-                <input type="text" v-model="editPostForm.title" class="form-control" id="editPostFormTitle" placeholder="标题">
+                <input type="text" v-model="editPostForm.title" class="form-control" id="editPostFormTitle" placeholder="title">
                 <small class="form-control-feedback" v-show="editPostForm.titleError">{{ editPostForm.titleError }}</small>
               </div>
               <div class="form-group">
-                <input type="text" v-model="editPostForm.summary" class="form-control" id="editPostFormSummary" placeholder="摘要">
+                <input type="text" v-model="editPostForm.summary" class="form-control" id="editPostFormSummary" placeholder="summary">
               </div>
               <div class="form-group">
-                <textarea v-model="editPostForm.body" class="form-control" id="editPostFormBody" rows="5" placeholder=" 内容"></textarea>
+                <textarea v-model="editPostForm.body" class="form-control" id="editPostFormBody" rows="5" placeholder=" content"></textarea>
                 <small class="form-control-feedback" v-show="editPostForm.bodyError">{{ editPostForm.bodyError }}</small>
               </div>
               <button type="reset" class="btn btn-secondary">Cancel</button>
@@ -36,14 +36,14 @@
 
     <form id="addPostForm" v-if="sharedState.is_authenticated && sharedState.user_perms.includes('write')" @submit.prevent="onSubmitAddPost" class="g-mb-40">
       <div class="form-group" v-bind:class="{'u-has-error-v1': postForm.titleError}">
-        <input type="text" v-model="postForm.title" class="form-control" id="postFormTitle" placeholder="标题">
+        <input type="text" v-model="postForm.title" class="form-control" id="postFormTitle" placeholder="title">
         <small class="form-control-feedback" v-show="postForm.titleError">{{ postForm.titleError }}</small>
       </div>
       <div class="form-group">
-        <input type="text" v-model="postForm.summary" class="form-control" id="postFormSummary" placeholder="摘要">
+        <input type="text" v-model="postForm.summary" class="form-control" id="postFormSummary" placeholder="summary">
       </div>
       <div class="form-group">
-        <textarea v-model="postForm.body" class="form-control" id="postFormBody" rows="5" placeholder=" 内容"></textarea>
+        <textarea v-model="postForm.body" class="form-control" id="postFormBody" rows="5" placeholder=" content"></textarea>
         <small class="form-control-feedback" v-show="postForm.bodyError">{{ postForm.bodyError }}</small>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
@@ -53,7 +53,7 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> All Posts <small v-if="posts">(共 {{ posts._meta.total_items }} 篇, {{ posts._meta.total_pages }} 页)</small>
+          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> All Posts <small v-if="posts">(Total {{ posts._meta.total_items }} article, {{ posts._meta.total_pages }} Page)</small>
         </h3>
         
         <div class="dropdown g-mb-10 g-mb-0--md">
@@ -61,20 +61,20 @@
             <i class="icon-options-vertical g-pos-rel g-top-1"></i>
           </span>
           <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
-            <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 1 }}" class="dropdown-item g-px-10">
-              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 篇
-            </router-link>
-            <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 5 }}" class="dropdown-item g-px-10">
-              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 5 篇
-            </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 10 }}" class="dropdown-item g-px-10">
-              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 篇
+              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 10 per page
+            </router-link>
+            <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
+              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 20 per page
+            </router-link>
+            <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 50 }}" class="dropdown-item g-px-10">
+              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 50 per page
             </router-link>
             
             <div class="dropdown-divider"></div>
             
-            <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
-              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 篇
+            <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 100 }}" class="dropdown-item g-px-10">
+              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 100 per page
             </router-link>
             
           </div>
@@ -82,17 +82,54 @@
       </div>
       <!-- End Panel Header -->
 
-      <!-- Panel Body -->
-      <div v-if="posts" class="card-block g-pa-0" >
-
+      <!-- Panel Body defauft-->
+      <!-- <div v-if="posts" class="card-block g-pa-0" >
         <post v-for="(post, index) in posts.items" v-bind:key="index"
           v-bind:post="post"
           v-on:edit-post="onEditPost(post)"
           v-on:delete-post="onDeletePost(post)">
         </post>
+      </div> -->
 
-      </div>
       <!-- End Panel Body -->
+
+      <!-- my custom layout 1-->
+      <div class="row card-block g-pa-0">
+        <div class="col-lg-8">
+          <InTheNews />
+        </div>
+        <div class="col-lg-4">
+          <Topstories />
+        </div>
+      </div>
+      <div>
+          <div class="row card-block g-pa-0" v-for="(posts, index) in chunkedArray" :key="index">
+              <div class="columns large-3 medium-3 small-3" v-for="(post, index) in posts" v-bind:key="index">
+                  <div class="card">
+                    <div class="card-divider">
+
+                        <!-- {{ post.title }} -->
+                        <h5 class="h5 g-color-gray-dark-v1 mb-0"><a v-if="post.source!= null" :href="post.source.split(': ')[1]" class="g-text-underline--none--hover">{{ post.source.split(": ")[0] || post.author.username }}</a> <span class="h6">Posted <router-link v-bind:to="{ name: 'PostDetail', params: { id: post.id } }" class="g-text-underline--none--hover">《<span v-html="post.title"></span>》</router-link></span></h5>
+
+                      </div>
+                      <router-link v-bind:to="{ name: 'PostDetail', params: { id: post.id } }"> <img :src="post.image"></router-link>
+
+                      <div class="card-section">
+                        <p>{{ post.summary }}</p>
+                      </div>
+
+                    <!-- <post v-bind:post="post"
+                        v-on:edit-post="onEditPost(post)"
+                        v-on:delete-post="onDeletePost(post)">
+                    </post> -->
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- <Test></Test> -->
+
+
     </div>
 
     <!-- Pagination #04 -->
@@ -104,28 +141,37 @@
       </pagination>
     </div>
     <!-- End Pagination #04 -->
-
+    <div><AccessibilityToolbar></AccessibilityToolbar></div>
   </div>
+      
 </template>
 
 <script>
 import store from '../store'
 import Post from './Base/Post'
 import Pagination from './Base/Pagination'
+import Topstories from "./Topstories"
+import InTheNews from "./InTheNews";
+import AccessibilityToolbar from 'vue-accessibility-toolbar'
 // bootstrap-markdown 编辑器依赖的 JS 文件，初始化编辑器在组件的 created() 方法中，同时它需要 JQuery 支持哦
 import '../assets/bootstrap-markdown/js/bootstrap-markdown.js'
-import '../assets/bootstrap-markdown/js/bootstrap-markdown.zh.js'
+// import '../assets/bootstrap-markdown/js/bootstrap-markdown.zh.js'
 import '../assets/bootstrap-markdown/js/marked.js'
 
+// import Test from './Test'
 
 export default {
   name: 'Home',  //this is the name of the component
   components: {
     Post,
-    Pagination
+    Pagination,
+    Topstories,
+    InTheNews,
+    AccessibilityToolbar
   },
   data () {
     return {
+      chunkedArray: null,
       sharedState: store.state,
       posts: '',
       postForm: {
@@ -146,10 +192,31 @@ export default {
       }
     }
   },
+  computed: {
+
+  },
   methods: {
+
+    processedPosts() {
+        let posts_sorted = this.posts;
+
+        // Add image_url attribute
+        // posts_sorted.map(post => {
+        //     let imgObj = post.multimedia.find(media => media.format === "superJumbo");
+        //     post.image_url = imgObj ? imgObj.url : "http://placehold.it/300x200?text=N/A";
+        // });
+
+        // Put Array into Chunks
+        let i, j, chunkedArray = [], chunk = 3;
+        for (i=0, j=0; i < posts_sorted.items.length; i += chunk, j++) {
+            chunkedArray[j] = posts_sorted.items.slice(i,i+chunk);
+        }
+        this.chunkedArray =  chunkedArray;
+    },
+
     getPosts () {
       let page = 1
-      let per_page = 5
+      let per_page = 10
       if (typeof this.$route.query.page != 'undefined') {
         page = this.$route.query.page
       }
@@ -157,12 +224,17 @@ export default {
       if (typeof this.$route.query.per_page != 'undefined') {
         per_page = this.$route.query.per_page
       }
-      
+      //get all post
+      //const path = `/api/posts/?page=${page}&per_page=${per_page}`
+      // get all topics except ebook
       const path = `/api/posts/?page=${page}&per_page=${per_page}`
       this.$axios.get(path)
         .then((response) => {
           // handle success
           this.posts = response.data
+          this.processedPosts()
+
+
         })
         .catch((error) => {
           // handle error
@@ -170,6 +242,7 @@ export default {
           this.$toasted.error(error.response.data.message, { icon: 'fingerprint' })
         })
     },
+    //add new post
     onSubmitAddPost (e) {
       this.postForm.errors = 0  // 重置
 
@@ -199,6 +272,7 @@ export default {
       const payload = {
         title: this.postForm.title,
         summary: this.postForm.summary,
+        image: this.postForm.image,
         body: this.postForm.body
       }
       this.$axios.post(path, payload)
@@ -249,7 +323,7 @@ export default {
         this.editPostForm.errors++
         this.editPostForm.bodyError = 'Body is required.'
         // boostrap4 modal依赖jQuery，不兼容 vue.js 的双向绑定。所以要手动添加警示样式和错误提示
-        // 给 bootstrap-markdown 编辑器内容添加警示样式，而不是添加到 #postFormBody 上
+        // Add a warning style to the contents of the bootstrap-markdown editor instead of #postFormBody
         $('#editPostForm .md-editor').closest('.form-group').addClass('u-has-error-v1')  // Bootstrap 4
         $('#editPostForm .md-editor').after('<small class="form-control-feedback">' + this.editPostForm.bodyError + '</small>')
       } else {
@@ -311,7 +385,7 @@ export default {
     onDeletePost (post) {
       this.$swal({
         title: "Are you sure?",
-        text: "该操作将彻底删除 [ " + post.title + " ], 请慎重",
+        text: "This operation will be completely deleted [ " + post.title + " ], Please be careful",
         type: "warning",
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
@@ -341,6 +415,7 @@ export default {
   },
   created () {
     this.getPosts()
+
     // 初始化 bootstrap-markdown 插件
     $(document).ready(function() {
       $("#postFormBody, #editPostFormBody").markdown({
@@ -356,6 +431,8 @@ export default {
     // 注意：要先执行 next() 不然 this.$route.query 还是之前的
     next()
     this.getPosts()
+
   }
 }
 </script>
+

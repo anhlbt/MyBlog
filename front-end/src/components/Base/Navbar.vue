@@ -12,7 +12,7 @@
               alt
             />
           </router-link>
-          <router-link to='/' class="g-text-underline--none--hover" >MadBlog</router-link>
+          <router-link to='/' class="g-text-underline--none--hover" >LBTAnh's Blog</router-link>
         </div>
         <button
           class="navbar-toggler"
@@ -34,12 +34,25 @@
                 <span class="sr-only">(current)</span>
               </router-link>
             </li>
+            <li class="nav-item active">
+              <router-link to="/homeebook" class="nav-link">
+                HomeEbook
+                <span class="sr-only">(current)</span>
+              </router-link>
+            </li>
             <li
-              class="nav-item"
+              class="nav-item active" 
               v-if="sharedState.is_authenticated && sharedState.user_perms.includes('admin')"
             >
               <router-link to="/admin" class="nav-link">Admin</router-link>
             </li>
+            <li
+              class="nav-item active">
+              <router-link to="/ebooktest" class="nav-link">EbookTest<span class="sr-only">(current)</span></router-link>
+            </li>            <li
+              class="nav-item active">
+              <router-link to="/scroll" class="nav-link">Scroll<span class="sr-only">(current)</span></router-link>
+            </li>            
           </ul>
 
           <form

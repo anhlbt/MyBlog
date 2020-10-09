@@ -31,18 +31,19 @@ def create_app(config_class=None):
 
 def configure_app(app, config_class):
     app.config.from_object(config_class)
-    # 不检查路由中最后是否有斜杠/
+    # Do not check if there is a slash at the end of the route /
     app.url_map.strict_slashes = False
-    # 整合RQ任务队列
+    # intergrate RQ task queue
     app.redis = Redis.from_url(app.config['REDIS_URL'])
-    app.task_queue = rq.Queue('madblog-tasks', connection=app.redis, default_timeout=3600)  # 设置任务队列中各任务的执行最大超时时间为 1 小时
-    # Elasticsearch全文检索
+    # set the maximum execution timeout for each task in the task queue to be 1 hour
+    app.task_queue = rq.Queue('madblog-tasks', connection=app.redis, default_timeout=3600)  # 
+    # Elasticsearch full text
     app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
         if app.config['ELASTICSEARCH_URL'] else None
 
 
 def configure_blueprints(app):
-    # 注册 blueprint
+    # Register blueprint
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(api_v2_bp, url_prefix='/api/v2')
 
@@ -62,7 +63,7 @@ def configure_extensions(app):
 
     @babel.localeselector
     def get_locale():
-        # return 'zh'  # 这样设置的话，所有用户永远显示中文
+        # return 'zh'  # with this setting all users will always display this language (vn, zh, en...)
         return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 

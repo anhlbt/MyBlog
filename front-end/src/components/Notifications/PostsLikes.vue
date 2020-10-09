@@ -5,7 +5,7 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Recived Posts Likes <small v-if="likes">(共 {{ likes._meta.total_items }} 条, {{ likes._meta.total_pages }} 页)</small>
+          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Recived Posts Likes <small v-if="likes">(Total {{ likes._meta.total_items }} Article, {{ likes._meta.total_pages }} Page)</small>
         </h3>
         <div class="dropdown g-mb-10 g-mb-0--md">
           <span class="d-block g-color-primary--hover g-cursor-pointer g-mr-minus-5 g-pa-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -13,19 +13,19 @@
           </span>
           <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 1 }}" class="dropdown-item g-px-10">
-              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 条
+              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 1 items per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 5 }}" class="dropdown-item g-px-10">
-              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 5 条
+              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 5 items per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 10 }}" class="dropdown-item g-px-10">
-              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 条
+              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 10 items per page
             </router-link>
             
             <div class="dropdown-divider"></div>
             
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
-              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 条
+              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 20 items per page
             </router-link>
             
           </div>
@@ -47,21 +47,21 @@
           </router-link>
           <div class="media-body">
             <div class="g-mb-15">
-              <h5 class="h5 g-color-gray-dark-v1 mb-0"><router-link v-bind:to="{ path: `/user/${like.user.id}` }" class="g-text-underline--none--hover">{{ like.user.name || like.user.username }}</router-link> <span class="h6">喜欢了你的文章 <router-link v-bind:to="{ path: `/post/${like.post.id}#like-post` }" class="g-text-underline--none--hover">《{{ like.post.title }}》</router-link></span></h5>
-              <span class="g-color-gray-dark-v4 g-font-size-12">{{ $moment(like.timestamp).format('YYYY年MM月DD日 HH:mm:ss') }}</span>
+              <h5 class="h5 g-color-gray-dark-v1 mb-0"><router-link v-bind:to="{ path: `/user/${like.user.id}` }" class="g-text-underline--none--hover">{{ like.user.name || like.user.username }}</router-link> <span class="h6">Liked your article <router-link v-bind:to="{ path: `/post/${like.post.id}#like-post` }" class="g-text-underline--none--hover">《{{ like.post.title }}》</router-link></span></h5>
+              <span class="g-color-gray-dark-v4 g-font-size-12">{{ $moment(like.timestamp).format('YYYY/MM/DD HH:mm:ss') }}</span>
             </div>
 
             <ul class="list-inline d-sm-flex my-0">
               <li class="list-inline-item g-mr-20">
                 <span class="u-link-v5 g-color-gray-dark-v4 g-color-primary--hover">
                   <i v-bind:class="{ 'g-color-red': like.post.likers_id.indexOf(sharedState.user_id) != -1 }" class="icon-heart g-pos-rel g-top-1 g-mr-3"></i>
-                  <span> {{ like.post.likers_id.length }} 人喜欢</span>
+                  <span> {{ like.post.likers_id.length }} People like</span>
                 </span>
               </li>
               <li class="list-inline-item g-mr-20">
                 <router-link v-bind:to="{ path: `/post/${like.post.id}#like-post` }" class="u-link-v5 g-color-gray-dark-v4 g-color-primary--hover" href="javascript:;">
                   <i class="icon-action-redo g-pos-rel g-top-1 g-mr-3"></i>
-                  前往查看
+                  Go to view
                 </router-link>
               </li>
             </ul>

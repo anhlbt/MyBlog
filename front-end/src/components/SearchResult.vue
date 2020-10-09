@@ -38,7 +38,7 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> All Posts <small v-if="posts">(共 {{ posts._meta.total_items }} 篇, {{ posts._meta.total_pages }} 页)</small>
+          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> All Posts <small v-if="posts">(Total {{ posts._meta.total_items }} article, {{ posts._meta.total_pages }} Page)</small>
         </h3>
         
         <div class="dropdown g-mb-10 g-mb-0--md">
@@ -47,19 +47,19 @@
           </span>
           <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 1 }}" class="dropdown-item g-px-10">
-              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 篇
+              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 1 per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 5 }}" class="dropdown-item g-px-10">
-              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 5 篇
+              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 5 per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 10 }}" class="dropdown-item g-px-10">
-              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 篇
+              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 10 per page
             </router-link>
             
             <div class="dropdown-divider"></div>
             
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
-              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 篇
+              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 20 per page
             </router-link>
             
           </div>
@@ -82,8 +82,8 @@
           
           <div class="media-body">
             <div class="g-mb-15">
-              <h5 class="h5 g-color-gray-dark-v1 mb-0"><router-link v-bind:to="{ path: `/user/${post.author.id}` }" class="g-text-underline--none--hover">{{ post.author.name || post.author.username }}</router-link> <span class="h6">发布了文章<router-link v-bind:to="{ name: 'PostDetail', params: { id: post.id }, query: { q: $route.query.q, page: $route.query.page, per_page: $route.query.per_page } }" class="g-text-underline--none--hover">《<span v-html="post.title"></span>》</router-link></span></h5>
-              <span class="g-color-gray-dark-v4 g-font-size-12">{{ $moment(post.timestamp).format('YYYY年MM月DD日 HH:mm:ss') }}</span>
+              <h5 class="h5 g-color-gray-dark-v1 mb-0"><router-link v-bind:to="{ path: `/user/${post.author.id}` }" class="g-text-underline--none--hover">{{ post.author.name || post.author.username }}</router-link> <span class="h6">Posted an article<router-link v-bind:to="{ name: 'PostDetail', params: { id: post.id }, query: { q: $route.query.q, page: $route.query.page, per_page: $route.query.per_page } }" class="g-text-underline--none--hover">《<span v-html="post.title"></span>》</router-link></span></h5>
+              <span class="g-color-gray-dark-v4 g-font-size-12">{{ $moment(post.timestamp).format('YYYY/MM/DD HH:mm:ss') }}</span>
             </div>
 
             <!-- vue-markdown 开始解析markdown，它是子组件，通过 props 给它传值即可
@@ -114,13 +114,15 @@
               </ul>
               <ul class="list-inline mb-0 ml-auto">
                 <li class="list-inline-item g-mr-5">
-                  <router-link v-bind:to="{ name: 'PostDetail', params: { id: post.id }, query: { q: $route.query.q, page: $route.query.page, per_page: $route.query.per_page } }" class="btn btn-xs u-btn-outline-primary">阅读全文</router-link>
+                  <router-link v-bind:to="{ name: 'PostDetail', params: { id: post.id }, query: { q: $route.query.q, page: $route.query.page, per_page: $route.query.per_page } }" class="btn btn-xs u-btn-outline-primary">Read the full text</router-link>
+                  <router-link v-bind:to="{ name: 'PostDetail', params: { id: post.id } }" class="btn btn-xs u-btn-outline-primary">Read the full text</router-link>
+
                 </li>
                 <li v-if="post.author.id == sharedState.user_id || sharedState.user_perms.includes('admin')" class="list-inline-item g-mr-5">
-                  <button v-on:click="onEditPost(post)" class="btn btn-xs u-btn-outline-purple" data-toggle="modal" data-target="#editPostModal">编辑</button>
+                  <button v-on:click="onEditPost(post)" class="btn btn-xs u-btn-outline-purple" data-toggle="modal" data-target="#editPostModal">edit</button>
                 </li>
                 <li v-if="post.author.id == sharedState.user_id || sharedState.user_perms.includes('admin')" class="list-inline-item">
-                  <button v-on:click="onDeletePost(post)" class="btn btn-xs u-btn-outline-red">删除</button>
+                  <button v-on:click="onDeletePost(post)" class="btn btn-xs u-btn-outline-red">delete</button>
                 </li>
               </ul>
             </div>
@@ -311,7 +313,7 @@ export default {
     onDeletePost (post) {
       this.$swal({
         title: "Are you sure?",
-        text: "该操作将彻底删除 [ " + post.title + " ], 请慎重",
+        text: "This operation will be completely deleted [ " + post.title + " ], please be carefully",
         type: "warning",
         showCancelButton: true,
         confirmButtonColor: '#3085d6',

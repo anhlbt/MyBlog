@@ -5,7 +5,7 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Received Messages <small v-if="messages">(共 {{ messages._meta.total_items }} 条, {{ messages._meta.total_pages }} 页)</small>
+          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Received Messages <small v-if="messages">(Total {{ messages._meta.total_items }} article, {{ messages._meta.total_pages }} page)</small>
         </h3>
         <div class="dropdown g-mb-10 g-mb-0--md">
           <span class="d-block g-color-primary--hover g-cursor-pointer g-mr-minus-5 g-pa-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -14,19 +14,19 @@
           <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
             
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 1 }}" class="dropdown-item g-px-10">
-              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 条
+              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 1 per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 5 }}" class="dropdown-item g-px-10">
-              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 5 条
+              <i class="icon-layers g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 5 per page
             </router-link>
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 10 }}" class="dropdown-item g-px-10">
-              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 条
+              <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 10 per page
             </router-link>
             
             <div class="dropdown-divider"></div>
             
             <router-link v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}" class="dropdown-item g-px-10">
-              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 条
+              <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 20 per page
             </router-link>
             
           </div>
@@ -51,21 +51,21 @@
             <router-link v-bind:to="{ path: `/user/${message.sender.id}` }" class="g-text-underline--none--hover">
               <span class="g-mr-5">{{ message.sender.name || message.sender.username }}</span>
             </router-link>
-            <small class="g-font-size-12 g-color-aqua">给你发送了<small v-if="message.new_count" class="g-font-size-12 g-color-deeporange"> {{ message.new_count }} 条新 </small>私信</small>
+            <small class="g-font-size-12 g-color-aqua">Sent you<small v-if="message.new_count" class="g-font-size-12 g-color-deeporange"> {{ message.new_count }} New </small>Private letters</small>
           </h5>
-          <p class="m-0">{{ $moment(message.timestamp).format('YYYY年MM月DD日 HH:mm:ss') }}</p>
+          <p class="m-0">{{ $moment(message.timestamp).format('YYYY/MM/DD HH:mm:ss') }}</p>
         </div>
         <ul class="list-inline mb-0 align-self-center ml-auto">
           <li v-if="!message.is_blocking" class="list-inline-item g-mr-5">
-            <button v-on:click="onBlock(message.sender.id)" class="btn btn-block u-btn-outline-red g-rounded-20 g-px-10">拉黑</button>
+            <button v-on:click="onBlock(message.sender.id)" class="btn btn-block u-btn-outline-red g-rounded-20 g-px-10">Pull black</button>
           </li>
           <li v-else class="list-inline-item g-mr-5">
-            <button v-on:click="onUnblock(message.sender.id)" class="btn btn-block u-btn-outline-aqua g-rounded-20 g-px-10">取消拉黑</button>
+            <button v-on:click="onUnblock(message.sender.id)" class="btn btn-block u-btn-outline-aqua g-rounded-20 g-px-10">Cancel black</button>
           </li>
 
           <li class="list-inline-item">
             <router-link v-bind:to="{ name: 'MessagesHistory', query: { from: message.sender.id } }">
-              <button class="btn btn-block u-btn-outline-primary g-rounded-20 g-px-10">聊天记录</button>
+              <button class="btn btn-block u-btn-outline-primary g-rounded-20 g-px-10">chat record</button>
             </router-link>
           </li>
         </ul> 
