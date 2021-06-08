@@ -34,3 +34,4 @@ class Config(object):
     BABEL_DEFAULT_LOCALE = 'en'
     BABEL_DEFAULT_TIMEZONE = 'UTC'
     LANGUAGES = ['vn', 'en']
+    UPLOAD_FOLDER="uploads"

@@ -96,6 +96,9 @@
               <li class="nav-item">
                 <router-link v-bind:to="{ name: 'UserPosts' }" v-bind:active-class="'active'" class="nav-link" v-bind:class="{'active': $route.name == 'UserFollowingPosts'}">Posts <span class="u-label g-font-size-11 g-bg-purple g-rounded-20 g-px-10">{{ user.posts_count }}</span></router-link>
               </li>
+              <li class="nav-item">
+                <router-link v-bind:to="{ name: 'UserProperties' }" v-bind:active-class="'active'" class="nav-link" v-bind:class="{'active': $route.name == 'UserFollowingProperties'}">Properties <span class="u-label g-font-size-11 g-bg-red g-rounded-20 g-px-10">{{ user.properties_count }}</span></router-link>
+              </li>
             </ul>
 
             <!-- Nested sub-route exit -->
@@ -178,7 +181,7 @@ export default {
   },
   computed: {
     isUserOverView: function () {
-      const tabs = ['UserFollowers', 'UserFollowing', 'UserPosts', 'UserFollowingPosts']
+      const tabs = ['UserFollowers', 'UserFollowing', 'UserPosts', 'UserFollowingPosts', 'UserFollowingProperties']
       if (tabs.indexOf(this.$route.name) == -1) {
         return 'active'
       } else {

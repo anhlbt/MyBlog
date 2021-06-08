@@ -41,14 +41,14 @@ class UserAPI(Resource):
         return User.query.get_or_404(id)
 
     def delete(self, id):
-        '''删除单个用户'''
+        '''Delete a single user'''
         user = User.query.get_or_404(id)
         db.session.delete(user)
         db.session.commit()
         return '', 204
 
     def put(self, id):
-        '''修改单个用户，只能修改用户名或邮箱，修改密码后续在其它资源中实现'''
+        '''To modify a single user, only the user name or mailbox can be modified, and the password modification will be implemented in other resources later'''
         user = User.query.get_or_404(id)
 
         # 验证传入的参数值，如果 username 未传值默认使用该用户的原用户名，如果 email 未传值默认使用该用户的原邮箱
@@ -86,16 +86,16 @@ class UserListAPI(Resource):
         super(UserListAPI, self).__init__()
 
     def get(self):
-        '''返回用户列表'''
+        '''Return to user list'''
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 10, type=int), 100)
         return User.to_collection_dict(User.query, page, per_page, 'api_v2.users')
 
     def post(self):
-        '''注册新用户'''
+        '''Register a new user'''
         args = self.parser.parse_args(strict=True)
 
-        # 如果用户名或邮箱地址已被占用，返回错误提示
+        # If the user name or email address is already occupied, an error message will be returned
         message = {}
         if User.query.filter_by(username=args.get('username', None)).first():
             message['username'] = 'Please use a different username.'
@@ -104,7 +104,7 @@ class UserListAPI(Resource):
         if message:
             return {'message': message}, 400
 
-        # 写入数据库
+        # Write to the database
         user = User()
         user.from_dict(args, new_user=True)
         db.session.add(user)

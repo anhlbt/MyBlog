@@ -7,14 +7,14 @@ from app.api import bp
 from app.api.auth import token_auth
 from app.api.errors import bad_request, error_response
 from app.extensions import db
-from app.models import Permission, comments_likes, posts_likes, User, Post, Comment, Notification, Message, Task
+from app.models import Permission, comments_likes, posts_likes, User, Post, Comment, Notification, Message, Task, Property
 from app.utils.email import send_email
 from app.utils.decorator import permission_required
 
 
 @bp.route('/users/', methods=['POST'])
 def create_user():
-    '''注册一个新用户'''
+    '''Register a new user'''
     data = request.get_json()
     if not data:
         return bad_request(_('You must post JSON data.'))
@@ -40,7 +40,7 @@ def create_user():
     db.session.add(user)
     db.session.commit()
 
-    # 发送确认账户的邮件
+    # Send email confirming account
     token = user.generate_confirm_jwt()
     if not data.get('confirm_email_base_url'):
         confirm_url = 'http://127.0.0.1:5000/api/confirm/' + token
@@ -75,7 +75,7 @@ def create_user():
 
     response = jsonify(user.to_dict())
     response.status_code = 201
-    # HTTP协议要求201响应包含一个值为新资源URL的Location头部
+    # The HTTP protocol requires the 201 response to contain a Location header whose value is the URL of the new resource
     response.headers['Location'] = url_for('api.get_user', id=user.id)
     return response
 
@@ -83,7 +83,7 @@ def create_user():
 @bp.route('/users/', methods=['GET'])
 @token_auth.login_required
 def get_users():
-    '''返回用户集合，分页'''
+    '''Return user collection, pagination'''
     page = request.args.get('page', 1, type=int)
     per_page = min(
         request.args.get(
@@ -95,11 +95,11 @@ def get_users():
 @bp.route('/users/<int:id>', methods=['GET'])
 @token_auth.login_required
 def get_user(id):
-    '''返回一个用户'''
+    '''Return a user'''
     user = User.query.get_or_404(id)
     if g.current_user == user:
         return jsonify(user.to_dict(include_email=True))
-    # 如果是查询其它用户，添加 是否已关注过该用户 的标志位
+    # If you are querying other users, add the flag bit whether you have followed this user
     data = user.to_dict()
     data['is_following'] = g.current_user.is_following(user)
     return jsonify(data)
@@ -108,7 +108,7 @@ def get_user(id):
 @bp.route('/users/<int:id>', methods=['PUT'])
 @token_auth.login_required
 def update_user(id):
-    '''修改一个用户'''
+    '''Modify a user'''
     user = User.query.get_or_404(id)
     data = request.get_json()
     if not data:
@@ -140,7 +140,7 @@ def update_user(id):
 @bp.route('/users/<int:id>', methods=['DELETE'])
 @token_auth.login_required
 def delete_user(id):
-    '''删除一个用户'''
+    '''Delete a user'''
     user = User.query.get_or_404(id)
     if g.current_user != user and not g.current_user.can(Permission.ADMIN):
         return error_response(403)
@@ -152,12 +152,12 @@ def delete_user(id):
 @bp.route('/users/<int:id>/notifications/', methods=['GET'])
 @token_auth.login_required
 def get_user_notifications(id):
-    '''返回该用户的新通知'''
+    '''Return new notifications for this user'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
-    # 只返回上次看到的通知以来发生的新通知
-    # 比如用户在 10:00:00 请求一次该API，在 10:00:10 再次请求该API只会返回 10:00:00 之后产生的新通知
+    # Only return new notifications that have occurred since the last notification you saw
+    # For example, a user requests the API once at 10:00:00, and requests the API again at 10:00:10 will only return new notifications generated after 10:00:00
     since = request.args.get('since', 0.0, type=float)
     notifications = user.notifications.filter(
         Notification.timestamp > since).order_by(Notification.timestamp.asc())
@@ -165,20 +165,20 @@ def get_user_notifications(id):
 
 
 ###
-# 关注 / 取消关注
+# Follow / unfollow
 ###
 @bp.route('/follow/<int:id>', methods=['GET'])
 @token_auth.login_required
 @permission_required(Permission.FOLLOW)
 def follow(id):
-    '''开始关注一个用户'''
+    '''Start following a user'''
     user = User.query.get_or_404(id)
     if g.current_user == user:
         return bad_request(_('You cannot follow yourself.'))
     if g.current_user.is_following(user):
         return bad_request(_('You have already followed that user.'))
     g.current_user.follow(user)
-    # 给该用户发送新粉丝通知
+    # Send this user a new fan notification
     user.add_notification('unread_follows_count', user.new_follows())
     db.session.commit()
     username = user.name if user.name else user.username
@@ -192,14 +192,14 @@ def follow(id):
 @token_auth.login_required
 @permission_required(Permission.FOLLOW)
 def unfollow(id):
-    '''取消关注一个用户'''
+    '''Unfollow a user'''
     user = User.query.get_or_404(id)
     if g.current_user == user:
         return bad_request('You cannot unfollow yourself.')
     if not g.current_user.is_following(user):
         return bad_request('You are not following this user.')
     g.current_user.unfollow(user)
-    # 给该用户发送新粉丝通知(需要自动减1)
+    # Send a new fan notification to the user (need to automatically subtract 1)
     user.add_notification('unread_follows_count', user.new_follows())
     db.session.commit()
     username = user.name if user.name else user.username
@@ -210,12 +210,12 @@ def unfollow(id):
 
 
 ###
-# 用户关注了谁、用户的粉丝
+#Who is the user following, and the user's fans
 ###
 @bp.route('/users/<int:id>/followeds/', methods=['GET'])
 @token_auth.login_required
 def get_followeds(id):
-    '''返回用户已关注的人的列表'''
+    '''Return a list of people the user has followed'''
     user = User.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = min(
@@ -223,17 +223,17 @@ def get_followeds(id):
             'per_page', current_app.config['USERS_PER_PAGE'], type=int), 100)
     data = User.to_collection_dict(
         user.followeds, page, per_page, 'api.get_followeds', id=id)
-    # 为每个 followed 添加 is_following 标志位
+    # Add the is_following flag to each followed
     for item in data['items']:
         item['is_following'] = g.current_user.is_following(
             User.query.get(item['id']))
-        # 获取用户开始关注 followed 的时间
+        # Get the time when users started to follow followed
         res = db.engine.execute(
             "select * from followers where follower_id={} and followed_id={}".
             format(user.id, item['id']))
         item['timestamp'] = datetime.strptime(
-            list(res)[0][2], '%Y-%m-%d %H:%M:%S.%f')
-    # 按 timestamp 排序一个字典列表(倒序，最新关注的人在最前面)
+            str(list(res)[0][2]), '%Y-%m-%d %H:%M:%S.%f')
+    # Sort a list of dictionaries by timestamp (reverse order, with the most recent people at the top)
     data['items'] = sorted(data['items'], key=itemgetter('timestamp'), reverse=True)
     return jsonify(data)
 
@@ -241,7 +241,7 @@ def get_followeds(id):
 @bp.route('/users/<int:id>/followers/', methods=['GET'])
 @token_auth.login_required
 def get_followers(id):
-    '''返回用户的粉丝列表'''
+    '''Return the user's fan list'''
     user = User.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = min(
@@ -249,38 +249,38 @@ def get_followers(id):
             'per_page', current_app.config['USERS_PER_PAGE'], type=int), 100)
     data = User.to_collection_dict(
         user.followers, page, per_page, 'api.get_followers', id=id)
-    # 为每个 follower 添加 is_following 标志位
+    # Add the is_following flag for each follower
     for item in data['items']:
         item['is_following'] = g.current_user.is_following(
             User.query.get(item['id']))
-        # 获取 follower 开始关注该用户的时间
+        # Obtain the time when the follower started following the user
         res = db.engine.execute(
             "select * from followers where follower_id={} and followed_id={}".
             format(item['id'], user.id))
         item['timestamp'] = datetime.strptime(
-            list(res)[0][2], '%Y-%m-%d %H:%M:%S.%f')
-    # 按 timestamp 排序一个字典列表(倒序，最新的粉丝在最前面)
+            str(list(res)[0][2]), '%Y-%m-%d %H:%M:%S.%f')
+    # Sort a list of dictionaries by timestamp (reverse order, with the latest fans at the top)
     data['items'] = sorted(data['items'], key=itemgetter('timestamp'), reverse=True)
-    # 标记哪些粉丝是新的
+    # Mark which fans are new
     last_read_time = user.last_follows_read_time or datetime(1900, 1, 1)
     for item in data['items']:
         if item['timestamp'] > last_read_time:
             item['is_new'] = True
-    # 更新 last_follows_read_time 属性值
+    # Update the last_follows_read_time attribute value
     user.last_follows_read_time = datetime.utcnow()
-    # 将新粉丝通知的计数归零
+    # Reset the count of new fan notifications
     user.add_notification('unread_follows_count', 0)
     db.session.commit()
     return jsonify(data)
 
 
 ###
-# 与用户资源相关的资源
+# Resources related to user resources
 ##
 @bp.route('/users/<int:id>/posts/', methods=['GET'])
 @token_auth.login_required
 def get_user_posts(id):
-    '''返回该用户的所有博客文章列表'''
+    '''Return a list of all blog posts of this user'''
     user = User.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = min(
@@ -292,10 +292,24 @@ def get_user_posts(id):
     return jsonify(data)
 
 
+@bp.route('/users/<int:id>/properties/', methods=['GET'])
+@token_auth.login_required
+def get_user_properties(id):
+    '''Return a list of all blog posts of this user'''
+    user = User.query.get_or_404(id)
+    page = request.args.get('page', 1, type=int)
+    per_page = min(
+        request.args.get(
+            'per_page', current_app.config['POSTS_PER_PAGE'], type=int), 100)
+    data = Property.to_collection_dict(
+        user.properties.order_by(Property.created_at.desc()), page, per_page,
+        'api.get_user_properties', id=id)
+    return jsonify(data)
+
 @bp.route('/users/<int:id>/liked-posts/', methods=['GET'])
 @token_auth.login_required
 def get_user_liked_posts(id):
-    '''返回该用户喜欢别人的文章列表'''
+    '''Return a list of articles that the user likes others'''
     user = User.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = min(
@@ -306,11 +320,23 @@ def get_user_liked_posts(id):
         'api.get_user_liked_posts', id=id)
     return jsonify(data)
 
+@bp.route('/users/<int:id>/liked-properties/', methods=['GET'])
+@token_auth.login_required
+def get_user_liked_properties(id):
+    user = User.query.get_or_404(id)
+    page = request.args.get('page', 1, type=int)
+    per_page = min(
+        request.args.get(
+            'per_page', current_app.config['POSTS_PER_PAGE'], type=int), 100)
+    data = Property.to_collection_dict(
+        user.liked_properties.order_by(Property.created_at.desc()), page, per_page,
+        'api.get_user_liked_properties', id=id)
+    return jsonify(data)
 
 @bp.route('/users/<int:id>/followeds-posts/', methods=['GET'])
 @token_auth.login_required
 def get_user_followeds_posts(id):
-    '''返回该用户所关注的大神的所有博客文章列表'''
+    '''Returns a list of all blog posts of the Great God that the user is following'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -321,23 +347,24 @@ def get_user_followeds_posts(id):
     data = Post.to_collection_dict(
         user.followeds_posts().order_by(Post.timestamp.desc()), page, per_page,
         'api.get_user_followeds_posts', id=id)
-    # 标记哪些文章是新的
+    # Mark which articles are new
     last_read_time = user.last_followeds_posts_read_time or datetime(1900, 1, 1)
     for item in data['items']:
         if item['timestamp'] > last_read_time:
             item['is_new'] = True
-    # 更新 last_followeds_posts_read_time 属性值
+    # Update the last_followeds_posts_read_time attribute value
     user.last_followeds_posts_read_time = datetime.utcnow()
-    # 将新文章通知的计数归零
+    # Reset the count of new article notifications
     user.add_notification('unread_followeds_posts_count', 0)
     db.session.commit()
     return jsonify(data)
 
 
+
 @bp.route('/users/<int:id>/comments/', methods=['GET'])
 @token_auth.login_required
 def get_user_comments(id):
-    '''返回该用户发表过的所有评论列表'''
+    '''Returns a list of all comments posted by this user'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -354,7 +381,7 @@ def get_user_comments(id):
 @bp.route('/users/<int:id>/recived-comments/', methods=['GET'])
 @token_auth.login_required
 def get_user_recived_comments(id):
-    '''返回该用户收到的所有评论'''
+    '''Return all comments received by this user'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -362,29 +389,29 @@ def get_user_recived_comments(id):
     per_page = min(
         request.args.get(
             'per_page', current_app.config['COMMENTS_PER_PAGE'], type=int), 100)
-    # 用户发布的所有文章ID集合
+    # A collection of all article IDs published by the user
     user_posts_ids = [post.id for post in user.posts.all()]
-    # 用户文章下面的新评论, 即评论的 post_id 在 user_posts_ids 集合中，且评论的 author 不是自己(文章的作者)
+    #The new comment below the user’s post, that is, the post_id of the comment is in the user_posts_ids collection, and the author of the comment is not himself (the author of the post)
     q1 = Comment.query.filter(Comment.post_id.in_(user_posts_ids), Comment.author != user)
-    # 用户发表的评论被人回复了
+    # User comments were replied
     descendants = set()
     for c in user.comments:
         descendants = descendants | c.get_descendants()
-    descendants = descendants - set(user.comments.all())  # 除去自己在底下回复的
+    descendants = descendants - set(user.comments.all())  # Get rid of the reply from the bottom
     descendants_ids = [c.id for c in descendants]
     q2 = Comment.query.filter(Comment.id.in_(descendants_ids))
-    # 按时间倒序排列构成用户收到的所有评论
+    # Arrange in reverse chronological order to form all the comments received by the user
     recived_comments = q1.union(q2).order_by(Comment.mark_read, Comment.timestamp.desc())
-    # 分页后的 JSON 数据
+    # JSON data after pagination
     data = Comment.to_collection_dict(recived_comments, page, per_page, 'api.get_user_recived_comments', id=id)
-    # 标记哪些评论是新的
+    # Mark which comments are new
     last_read_time = user.last_recived_comments_read_time or datetime(1900, 1, 1)
     for item in data['items']:
         if item['timestamp'] > last_read_time:
             item['is_new'] = True
-    # 更新 last_recived_comments_read_time 属性值
+    # Update the last_recived_comments_read_time attribute value
     user.last_recived_comments_read_time = datetime.utcnow()
-    # 将新评论通知的计数归零
+    # Reset the count of new comment notifications
     user.add_notification('unread_recived_comments_count', 0)
     db.session.commit()
     return jsonify(data)
@@ -393,7 +420,7 @@ def get_user_recived_comments(id):
 @bp.route('/users/<int:id>/recived-comments-likes/', methods=['GET'])
 @token_auth.login_required
 def get_user_recived_comments_likes(id):
-    '''返回该用户收到的评论赞'''
+    '''Return comment likes received by this user'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -401,9 +428,9 @@ def get_user_recived_comments_likes(id):
     per_page = min(
         request.args.get(
             'per_page', current_app.config['COMMENTS_PER_PAGE'], type=int), 100)
-    # 用户哪些评论被点赞了，分页
+    # Which user comments are liked, pagination
     comments = user.comments.join(comments_likes).paginate(page, per_page)
-    # 点赞记录
+    # Like record
     records = {
         'items': [],
         '_meta': {
@@ -419,25 +446,25 @@ def get_user_recived_comments_likes(id):
         }
     }
     for c in comments.items:
-        # 重组数据，变成: (谁) (什么时间) 点赞了你的 (哪条评论)
+        # Reorganize the data to become: (who) (when) liked you (which comment)
         for u in c.likers:
-            if u != user:  # 用户自己点赞自己的评论不需要被通知
+            if u != user:  # Users who like their own comments do not need to be notified
                 data = {}
                 data['user'] = u.to_dict()
                 data['comment'] = c.to_dict()
-                # 获取点赞时间
+                # Time to get likes
                 res = db.engine.execute("select * from comments_likes where user_id={} and comment_id={}".format(u.id, c.id))
-                data['timestamp'] = datetime.strptime(list(res)[0][2], '%Y-%m-%d %H:%M:%S.%f')
-                # 标记本条点赞记录是否为新的
+                data['timestamp'] = datetime.strptime(str(list(res)[0][2]), '%Y-%m-%d %H:%M:%S.%f')
+                # Mark whether this like record is new
                 last_read_time = user.last_comments_likes_read_time or datetime(1900, 1, 1)
                 if data['timestamp'] > last_read_time:
                     data['is_new'] = True
                 records['items'].append(data)
-    # 按 timestamp 排序一个字典列表(倒序，最新点赞的人在最前面)
+    # Sort a list of dictionaries by timestamp (reverse order, with the most recent likes at the top)
     records['items'] = sorted(records['items'], key=itemgetter('timestamp'), reverse=True)
-    # 更新 last_comments_likes_read_time 属性值
+    # Update the last_comments_likes_read_time attribute value
     user.last_comments_likes_read_time = datetime.utcnow()
-    # 将新点赞通知的计数归零
+    # Reset the count of new like notifications to zero
     user.add_notification('unread_comments_likes_count', 0)
     db.session.commit()
     return jsonify(records)
@@ -446,7 +473,7 @@ def get_user_recived_comments_likes(id):
 @bp.route('/users/<int:id>/recived-posts-likes/', methods=['GET'])
 @token_auth.login_required
 def get_user_recived_posts_likes(id):
-    '''返回该用户收到的文章喜欢'''
+    '''Return article likes received by this user'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -454,9 +481,9 @@ def get_user_recived_posts_likes(id):
     per_page = min(
         request.args.get(
             'per_page', current_app.config['POSTS_PER_PAGE'], type=int), 100)
-    # 用户哪些文章被喜欢/收藏了，分页
+    # Which articles have been liked/favored by users, pagination
     posts = user.posts.join(posts_likes).paginate(page, per_page)
-    # 喜欢记录
+    # Like to record
     records = {
         'items': [],
         '_meta': {
@@ -472,25 +499,25 @@ def get_user_recived_posts_likes(id):
         }
     }
     for p in posts.items:
-        # 重组数据，变成: (谁) (什么时间) 喜欢了你的 (哪篇文章)
+        # Reorganize the data to become: (who) (when) liked yours (which article)
         for u in p.likers:
-            if u != user:  # 用户自己喜欢自己的文章不需要被通知
+            if u != user:  # Users do not need to be notified if they like their articles
                 data = {}
                 data['user'] = u.to_dict()
                 data['post'] = p.to_dict()
-                # 获取喜欢时间
+                # Get like time
                 res = db.engine.execute("select * from posts_likes where user_id={} and post_id={}".format(u.id, p.id))
-                data['timestamp'] = datetime.strptime(list(res)[0][2], '%Y-%m-%d %H:%M:%S.%f')
-                # 标记本条喜欢记录是否为新的
+                data['timestamp'] = datetime.strptime(str(list(res)[0][2]), '%Y-%m-%d %H:%M:%S.%f')
+                # Mark whether this favorite record is new
                 last_read_time = user.last_posts_likes_read_time or datetime(1900, 1, 1)
                 if data['timestamp'] > last_read_time:
                     data['is_new'] = True
                 records['items'].append(data)
-    # 按 timestamp 排序一个字典列表(倒序，最新喜欢的人在最前面)
+    # Sort a list of dictionaries by timestamp (reverse order, with the most recent favorite at the top)
     records['items'] = sorted(records['items'], key=itemgetter('timestamp'), reverse=True)
-    # 更新 last_posts_likes_read_time 属性值
+    # Update the last_posts_likes_read_time attribute value
     user.last_posts_likes_read_time = datetime.utcnow()
-    # 将新喜欢通知的计数归零
+    # Reset the count of new like notifications to zero
     user.add_notification('unread_posts_likes_count', 0)
     db.session.commit()
     return jsonify(records)
@@ -499,8 +526,8 @@ def get_user_recived_posts_likes(id):
 @bp.route('/users/<int:id>/messages-recipients/', methods=['GET'])
 @token_auth.login_required
 def get_user_messages_recipients(id):
-    '''我给哪些用户发过私信，按用户分组，返回我给各用户最后一次发送的私信
-    即: 我给 (谁) 最后一次 发了 (什么私信)'''
+    '''Which users have I sent private messages, group by users, and return the last private message I sent to each user
+    That is: I sent (what private message) to (who) the last time'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -511,18 +538,18 @@ def get_user_messages_recipients(id):
     data = Message.to_collection_dict(
         user.messages_sent.group_by(Message.recipient_id).order_by(Message.timestamp.desc()), page, per_page,
         'api.get_user_messages_recipients', id=id)
-    # 我给每个用户发的私信，他们有没有未读的
+    # I send a private message to each user, do they have unread
     for item in data['items']:
-        # 发给了谁
+        # To whom
         recipient = User.query.get(item['recipient']['id'])
-        # 总共给他发过多少条
+        # How many have been sent to him in total
         item['total_count'] = user.messages_sent.filter_by(recipient_id=item['recipient']['id']).count()
-        # 他最后一次查看收到的私信的时间
+        #The last time he checked the received private message
         last_read_time = recipient.last_messages_read_time or datetime(1900, 1, 1)
-        # item 是发给他的最后一条，如果最后一条不是新的，肯定就没有啦
+        # item is the last one sent to him, if the last one is not new, there will be none
         if item['timestamp'] > last_read_time:
             item['is_new'] = True
-            # 继续获取发给这个用户的私信有几条是新的
+            # Continue to get the private messages sent to this user, a few of which are new
             item['new_count'] = user.messages_sent.filter_by(recipient_id=item['recipient']['id']).filter(Message.timestamp > last_read_time).count()
     return jsonify(data)
 
@@ -530,8 +557,8 @@ def get_user_messages_recipients(id):
 @bp.route('/users/<int:id>/messages-senders/', methods=['GET'])
 @token_auth.login_required
 def get_user_messages_senders(id):
-    '''哪些用户给我发过私信，按用户分组，返回各用户最后一次发送的私信
-    即: (谁) 最后一次 给我发了 (什么私信)'''
+    '''Which users have sent me private messages, group by users, and return the last private message sent by each user
+    That is: (who) sent me the last time (what private message)'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -540,25 +567,25 @@ def get_user_messages_senders(id):
         request.args.get(
             'per_page', current_app.config['MESSAGES_PER_PAGE'], type=int), 100)
     data = Message.to_collection_dict(
-        user.messages_received.group_by(Message.sender_id).order_by(Message.timestamp.desc()), page, per_page,
+        user.messages_received.group_by(Message.sender_id, Message.id).order_by(Message.timestamp.desc()), page, per_page,
         'api.get_user_messages_senders', id=id)
-    # 这个用户发给我的私信有没有新的
+    # Is there any new private message sent to me by this user?
     last_read_time = user.last_messages_read_time or datetime(1900, 1, 1)
-    new_items = []  # 最后一条是新的
-    not_new_items = []  # 最后一条不是新的
+    new_items = []  # The last one is new
+    not_new_items = []  # The last one is not new
     for item in data['items']:
-        # 判断我有没有拉黑他
+        # Judge if I blocked him
         if user.is_blocking(User.query.get(item['sender']['id'])):
             item['is_blocking'] = True
-        # item 是他发的最后一条，如果最后一条不是新的，肯定就没有啦
+        # item is the last one he sent, if the last one is not new, there is definitely no
         if item['timestamp'] > last_read_time:
             item['is_new'] = True
-            # 继续获取这个用户发的私信有几条是新的
+            # Continue to get the private messages sent by this user, a few of which are new
             item['new_count'] = user.messages_received.filter_by(sender_id=item['sender']['id']).filter(Message.timestamp > last_read_time).count()
             new_items.append(item)
         else:
             not_new_items.append(item)
-    # 对那些最后一条是新的按 timestamp 正序排序，不然用户更新 last_messages_read_time 会导致时间靠前的全部被标记已读
+    #The last one is new and sorted by timestamp in positive order, otherwise the user updating last_messages_read_time will cause all the ones with the first time to be marked as read
     new_items = sorted(new_items, key=itemgetter('timestamp'))
     data['items'] = new_items + not_new_items
     return jsonify(data)
@@ -567,7 +594,7 @@ def get_user_messages_senders(id):
 @bp.route('/users/<int:id>/history-messages/', methods=['GET'])
 @token_auth.login_required
 def get_user_history_messages(id):
-    '''返回我与某个用户(由查询参数 from 获取)之间的所有私信记录'''
+    '''Return all private message records between me and a user (obtained by the query parameter from)'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -576,17 +603,17 @@ def get_user_history_messages(id):
         request.args.get(
             'per_page', current_app.config['MESSAGES_PER_PAGE'], type=int), 100)
     from_id = request.args.get('from', type=int)
-    if not from_id:  # 必须提供聊天的对方用户的ID
+    if not from_id:  # Must provide the ID of the chatting user
         return bad_request('You must provide the user id of opposite site.')
-    # 对方发给我的
+    # Sent to me
     q1 = Message.query.filter(Message.sender_id == from_id, Message.recipient_id == id)
-    # 我发给对方的
+    # I sent to each other
     q2 = Message.query.filter(Message.sender_id == id, Message.recipient_id == from_id)
-    # 按时间正序排列构成完整的对话时间线
+    # Arrange in positive time order to form a complete dialogue timeline
     history_messages = q1.union(q2).order_by(Message.timestamp)
     data = Message.to_collection_dict(history_messages, page, per_page, 'api.get_user_history_messages', id=id)
-    # 现在这一页的 data['items'] 包含对方发给我和我发给对方的
-    # 需要创建一个新列表，只包含对方发给我的，用来查看哪些私信是新的
+    # The data['items'] on this page now contains what the other party sent to me and me
+    # Need to create a new list, only include the other party sent to me, to see which private messages are new
     recived_messages = [item for item in data['items'] if item['sender']['id'] != id]
     sent_messages = [item for item in data['items'] if item['sender']['id'] == id]
     # 然后，标记哪些私信是新的
@@ -597,13 +624,13 @@ def get_user_history_messages(id):
             item['is_new'] = True
             new_count += 1
     if new_count > 0:
-        # 更新 last_messages_read_time 属性值为收到的私信列表最后一条(最近的)的时间
+        # Update the last_messages_read_time attribute value to the last (recent) time of the received private message list
         user.last_messages_read_time = recived_messages[-1]['timestamp']
-        db.session.commit()  # 先提交数据库，这样 user.new_recived_messages() 才会变化
-        # 更新用户的新私信通知的计数
+        db.session.commit()  # Submit the database first so that user.new_recived_messages() will change
+        # Update the user's new private message notification count
         user.add_notification('unread_messages_count', user.new_recived_messages())
         db.session.commit()
-    # 最后，重新组合 data['items']，因为收到的新私信添加了 is_new 标记
+    # Finally, regroup data['items'], because the new private message received is added with the is_new tag
     messages = recived_messages + sent_messages
     messages.sort(key=data['items'].index)  # 保持 messages 列表元素的顺序跟 data['items'] 一样
     data['items'] = messages
@@ -613,7 +640,7 @@ def get_user_history_messages(id):
 @bp.route('/users/<int:id>/tasks/', methods=['GET'])
 @token_auth.login_required
 def get_user_tasks_in_progress(id):
-    '''返回用户所有正在运行中的后台任务'''
+    '''Return all running background tasks of the user'''
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -634,7 +661,7 @@ def get_user_tasks_in_progress(id):
 @token_auth.login_required
 @permission_required(Permission.FOLLOW)
 def block(id):
-    '''开始拉黑一个用户'''
+    '''Start to block a user'''
     user = User.query.get_or_404(id)
     if g.current_user == user:
         return bad_request('You cannot block yourself.')
@@ -653,7 +680,7 @@ def block(id):
 @token_auth.login_required
 @permission_required(Permission.FOLLOW)
 def unblock(id):
-    '''取消拉黑一个用户'''
+    '''Unblock a user'''
     user = User.query.get_or_404(id)
     if g.current_user == user:
         return bad_request('You cannot unblock yourself.')
@@ -670,7 +697,7 @@ def unblock(id):
 @bp.route('/resend-confirm', methods=['POST'])
 @token_auth.login_required
 def resend_confirmation():
-    '''重新发送确认账户的邮件'''
+    '''Resend the email confirming the account'''
     data = request.get_json()
     if not data:
         return bad_request(_('You must post JSON data.'))
@@ -713,7 +740,7 @@ def resend_confirmation():
 @bp.route('/confirm/<token>', methods=['GET'])
 @token_auth.login_required
 def confirm(token):
-    '''用户收到验证邮件后，验证其账户'''
+    '''After the user receives the verification email, verify their account'''
     if g.current_user.confirmed:
         return bad_request(_('You have already confirmed your account.'))
     if g.current_user.verify_confirm_jwt(token):
@@ -732,7 +759,7 @@ def confirm(token):
 
 @bp.route('/reset-password-request', methods=['POST'])
 def reset_password_request():
-    '''请求重置账户密码，需要提供注册时填写的邮箱地址'''
+    '''Request to reset the account password, you need to provide the email address filled in during registration'''
     data = request.get_json()
     if not data:
         return bad_request(_('You must post JSON data.'))
@@ -747,7 +774,7 @@ def reset_password_request():
         return bad_request(message)
 
     user = User.query.filter_by(email=data.get('email')).first()
-    if user:  # 如果提供的邮箱地址对应的用户实例对象存在，就发邮件
+    if user:  # If the user instance object corresponding to the provided email address exists, send an email
         token = user.generate_reset_password_jwt()
 
         text_body = '''
@@ -775,7 +802,7 @@ def reset_password_request():
                    recipients=[user.email],
                    text_body=text_body,
                    html_body=html_body)
-    # 不管前端提供的邮箱地址有没有对应的用户实例(不排除有人想恶意重置别人的账户)，都给他回应
+    # Regardless of whether the email address provided by the front end has a corresponding user instance (does not rule out someone who wants to maliciously reset someone else's account), respond to him
     return jsonify({
         'status': 'success',
         'message': _('An email with instructions to reset your password has been sent to you.')
@@ -784,7 +811,7 @@ def reset_password_request():
 
 @bp.route('/reset-password/<token>', methods=['POST'])
 def reset_password(token):
-    '''用户点击邮件中的链接，通过验证 JWT 来重置对应的账户的密码'''
+    '''The user clicks on the link in the email to reset the password of the corresponding account by verifying the JWT'''
     data = request.get_json()
     if not data:
         return bad_request(_('You must post JSON data.'))
@@ -804,7 +831,7 @@ def reset_password(token):
 @bp.route('/update-password', methods=['POST'])
 @token_auth.login_required
 def update_password():
-    '''已登录的用户更新自己的密码'''
+    '''The logged-in user updates his password'''
     data = request.get_json()
     if not data:
         return bad_request(_('You must post JSON data.'))

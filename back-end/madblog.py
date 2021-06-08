@@ -4,10 +4,13 @@ import sys
 from flask_babel import gettext as _
 from app import create_app
 from app.extensions import db
-from app.models import Role, User, Post, Comment, Notification, Message, Task
+from app.models import Role, User, Post, Comment, Notification, Message, Task, Property
 from config import Config
+# import ssl
+
 
 app = create_app(Config)
+
 
 # 创建 coverage 实例
 COV = None
@@ -60,3 +63,4 @@ def test(coverage):
         print('')
         print('HTML report be stored in: %s' % os.path.join(covdir, 'index.html'))
         COV.erase()
+

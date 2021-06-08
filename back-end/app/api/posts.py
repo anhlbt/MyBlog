@@ -11,7 +11,7 @@ import pdb
 @token_auth.login_required
 @permission_required(Permission.WRITE)
 def create_post():
-    '''添加一篇新文章'''
+    '''Add a new article'''
     # pdb.set_trace()
     data = request.get_json()
     if not data:
@@ -28,23 +28,23 @@ def create_post():
 
     post = Post()
     post.from_dict(data)
-    post.author = g.current_user  # 通过 auth.py 中 verify_token() 传递过来的（同一个request中，需要先进行 Token 认证）
+    post.author = g.current_user  # Passed by verify_token() in auth.py (in the same request, Token authentication is required)
     db.session.add(post)
-    # 给文章作者的所有粉丝发送新文章通知
+    # Send a new article notification to all fans of the article author
     for user in post.author.followers:
         user.add_notification('unread_followeds_posts_count',
                               user.new_followeds_posts())
     db.session.commit()
     response = jsonify(post.to_dict())
     response.status_code = 201
-    # HTTP协议要求201响应包含一个值为新资源URL的Location头部
+    # The HTTP protocol requires the 201 response to contain a Location header whose value is the URL of the new resource
     response.headers['Location'] = url_for('api.get_post', id=post.id)
     return response
 
 
 @bp.route('/posts/', methods=['GET'])
 def get_posts():
-    '''返回文章集合，分页'''
+    '''Return to the collection of articles, pagination'''
     page = request.args.get('page', 1, type=int)
     per_page = min(
         request.args.get(
@@ -91,7 +91,7 @@ def get_post(id):
         data['_links']['next'] = url_for('api.get_post', id=next_basequery[-1].id)
     else:
         data['_links']['next'] = None
-    # 上一篇文章
+    # Previous article
     prev_basequery = Post.query.order_by(Post.timestamp.desc()).filter(Post.timestamp < post.timestamp)
     if prev_basequery.first():
         data['prev_id'] = prev_basequery.first().id
@@ -105,7 +105,7 @@ def get_post(id):
 @bp.route('/posts/<int:id>', methods=['PUT'])
 @token_auth.login_required
 def update_post(id):
-    '''修改一篇文章'''
+    '''Edit an article'''
     post = Post.query.get_or_404(id)
     if g.current_user != post.author and not g.current_user.can(Permission.ADMIN):
         return error_response(403)
@@ -133,7 +133,7 @@ def update_post(id):
 @bp.route('/posts/<int:id>', methods=['DELETE'])
 @token_auth.login_required
 def delete_post(id):
-    '''删除一篇文章'''
+    '''Delete an article'''
     post = Post.query.get_or_404(id)
     if g.current_user != post.author and not g.current_user.can(Permission.ADMIN):
         return error_response(403)
@@ -147,21 +147,21 @@ def delete_post(id):
 
 
 ###
-# 与博客文章资源相关的资源
+# Resources related to blog post resources
 ##
 @bp.route('/posts/<int:id>/comments/', methods=['GET'])
 def get_post_comments(id):
-    '''返回当前文章下面的一级评论'''
+    '''Return to the first level comment below the current article'''
     post = Post.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = min(
         request.args.get(
             'per_page', current_app.config['COMMENTS_PER_PAGE'], type=int), 100)
-    # 先获取一级评论
+    # Get first level comments first
     data = Comment.to_collection_dict(
         post.comments.filter(Comment.parent==None).order_by(Comment.timestamp.desc()), page, per_page,
         'api.get_post_comments', id=id)
-    # 再添加子孙到一级评论的 descendants 属性上
+    # Then add descendants to the descendants attribute of the first-level comment
     for item in data['items']:
         comment = Comment.query.get(item['id'])
         descendants = [child.to_dict() for child in comment.get_descendants()]
@@ -172,20 +172,19 @@ def get_post_comments(id):
 
 
 ###
-# 文章被喜欢/收藏 或 被取消喜欢/取消收藏
+# Article was liked/favored or unfavored/unfavored
 ###
 @bp.route('/posts/<int:id>/like', methods=['GET'])
 @token_auth.login_required
 def like_post(id):
-    '''喜欢文章'''
+    '''Like article'''
     post = Post.query.get_or_404(id)
     post.liked_by(g.current_user)
     db.session.add(post)
-    # 切记要先提交，先添加喜欢记录到数据库，因为 new_posts_likes() 会查询 posts_likes 关联表
+    # Remember to submit first, first add the like record to the database, because new_posts_likes() will query the posts_likes association table    
     db.session.commit()
-    # 给文章作者发送新喜欢通知
-    post.author.add_notification('unread_posts_likes_count',
-                                 post.author.new_posts_likes())
+    # Send new like notifications to article authors
+    post.author.add_notification('unread_posts_likes_count', post.author.new_posts_likes())
     db.session.commit()
     return jsonify({
         'status': 'success',
@@ -196,13 +195,13 @@ def like_post(id):
 @bp.route('/posts/<int:id>/unlike', methods=['GET'])
 @token_auth.login_required
 def unlike_post(id):
-    '''取消喜欢文章'''
+    '''Unlike article'''
     post = Post.query.get_or_404(id)
     post.unliked_by(g.current_user)
     db.session.add(post)
-    # 切记要先提交，先添加喜欢记录到数据库，因为 new_posts_likes() 会查询 posts_likes 关联表
+    # Remember to submit first and add the likes record to the database first, because new_posts_likes() will query the posts_likes association table
     db.session.commit()
-    # 给文章作者发送新喜欢通知(需要自动减1)
+    # Send a new like notification to the author of the article (need to automatically subtract 1)
     post.author.add_notification('unread_posts_likes_count',
                                  post.author.new_posts_likes())
     db.session.commit()
@@ -266,20 +265,20 @@ def search():
 
 @bp.route('/search/post-detail/<int:id>', methods=['GET'])
 def get_search_post(id):
-    '''从搜索结果列表页跳转到文章详情'''
+    '''Jump to article details from the search result list page'''
     q = request.args.get('q')
     page = request.args.get('page', type=int)
     per_page = request.args.get('per_page', type=int)
 
-    if q and page and per_page:  # 说明是从搜索结果页中过来查看文章详情的，所以要高亮关键字
+    if q and page and per_page:  # The description is from the search results page to view the details of the article, so highlight the keywords
         total, hits_basequery = Post.search(q, page, per_page)
-        post = hits_basequery.first()  # 只会有唯一的一篇文章
-        data = post.to_dict()  # 会高亮关键字
+        post = hits_basequery.first()  # There will be only one article
+        data = post.to_dict()  # Will highlight keywords
     else:
         post = Post.query.get_or_404(id)
-        data = post.to_dict()  # 不会高亮关键字
+        data = post.to_dict()  # Will not highlight keywords
 
-    # 下一篇文章
+    # Next article
     next_basequery = Post.query.order_by(Post.timestamp.desc()).filter(Post.timestamp > post.timestamp)
     if next_basequery.all():
         data['next_id'] = next_basequery[-1].id
@@ -287,7 +286,7 @@ def get_search_post(id):
         data['_links']['next'] = url_for('api.get_post', id=next_basequery[-1].id)
     else:
         data['_links']['next'] = None
-    # 上一篇文章
+    # Previous article
     prev_basequery = Post.query.order_by(Post.timestamp.desc()).filter(Post.timestamp < post.timestamp)
     if prev_basequery.first():
         data['prev_id'] = prev_basequery.first().id

@@ -9,7 +9,7 @@ from app.utils.decorator import admin_required
 
 @bp.route('/roles/perms', methods=['GET'])
 def get_perms():
-    '''获取所有Permissions'''
+    '''Get all Permissions'''
     data = [
         {'name': 'FOLLOW', 'dec': 1},
         {'name': 'COMMENT', 'dec': 2},
@@ -23,7 +23,7 @@ def get_perms():
 @token_auth.login_required
 @admin_required
 def create_role():
-    '''注册一个新角色'''
+    '''Register a new role'''
     data = request.get_json()
     if not data:
         return bad_request('You must post JSON data.')
@@ -51,7 +51,7 @@ def create_role():
 
     response = jsonify(role.to_dict())
     response.status_code = 201
-    # HTTP协议要求201响应包含一个值为新资源URL的Location头部
+    # The HTTP protocol requires the 201 response to contain a Location header whose value is the URL of the new resource
     response.headers['Location'] = url_for('api.get_role', id=role.id)
     return response
 
@@ -60,7 +60,7 @@ def create_role():
 @token_auth.login_required
 @admin_required
 def get_roles():
-    '''返回所有角色的集合'''
+    '''Returns the collection of all characters'''
     page = request.args.get('page', 1, type=int)
     per_page = min(request.args.get('per_page', 10, type=int), 100)
     data = Role.to_collection_dict(Role.query, page, per_page, 'api.get_roles')
@@ -71,11 +71,11 @@ def get_roles():
 @token_auth.login_required
 @admin_required
 def get_role(id):
-    '''返回一个角色'''
+    '''Return a character'''
     role = Role.query.get_or_404(id)
     data = role.to_dict()
 
-    # 当前角色已拥有的操作权限列表(整数列表)
+    # List of operation permissions that the current role has (list of integers)
     choices = [
         {'name': 'FOLLOW', 'dec': 1},
         {'name': 'COMMENT', 'dec': 2},
@@ -91,7 +91,7 @@ def get_role(id):
 @token_auth.login_required
 @admin_required
 def update_role(id):
-    '''修改一个角色'''
+    '''Modify a role'''
     role = Role.query.get_or_404(id)
     data = request.get_json()
     if not data:
@@ -123,7 +123,7 @@ def update_role(id):
 @token_auth.login_required
 @admin_required
 def delete_role(id):
-    '''删除一个角色'''
+    '''Delete a role'''
     role = Role.query.get_or_404(id)
     db.session.delete(role)
     db.session.commit()

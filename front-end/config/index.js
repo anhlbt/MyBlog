@@ -5,6 +5,22 @@
 const path = require('path')
 var webpack = require('webpack') //anhlbt
 module.exports = {
+  css: {
+    loaderOptions: {
+      // pass options to sass-loader
+      // @/ is an alias to src/
+      // so this assumes you have a file named `src/variables.sass`
+      // Note: this option is named as "prependData" in sass-loader v8
+
+      scss: {
+        prependData: `
+          @import "@/assets/scss/main.scss";
+          @import "@/assets/scss/_variables.scss";
+        `
+      }
+    }
+  },
+
   dev: {
 
     // Paths
@@ -19,7 +35,7 @@ module.exports = {
     errorOverlay: true,
     notifyOnErrors: true,
     poll: false, // https://webpack.js.org/configuration/dev-server/#devserver-watchoptions-
-
+    
     
     /**
      * Source Maps

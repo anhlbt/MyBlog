@@ -1,5 +1,5 @@
 import base64
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from hashlib import md5
 import json
 import jwt
@@ -9,7 +9,7 @@ from flask import url_for, current_app
 from app.extensions import db
 from app.utils.elasticsearch import add_to_index, remove_from_index, query_index, es_highlight
 from sqlalchemy.ext import mutable
-
+from sqlalchemy.dialects import postgresql
 
 class SearchableMixin(object):
     @classmethod
@@ -19,27 +19,27 @@ class SearchableMixin(object):
         if total == 0:
             return 0, cls.query.filter_by(id=0)  # If there is no match for the search term, deliberately return empty BaseQuery
 
-        hit_ids = []  # 匹配到的记录，id 列表
+        hit_ids = []  # Matched records, id list
         when = []
         for i in range(len(hits)):
             hit_ids.append(hits[i][0])
             when.append((hits[i][0], i))
-        # 将 hit_ids 列表转换成对应排序顺序(ES搜索得分高排在前面)的 BaseQuery，请参考: https://stackoverflow.com/questions/6332043/sql-order-by-multiple-values-in-specific-order/6332081#6332081
+        # Convert the hit_ids list into BaseQuery corresponding to the sort order (ES search score is the highest), please refer to: https://stackoverflow.com/questions/6332043/sql-order-by-multiple-values-in-specific-order/6332081#6332081
         hits_basequery = cls.query.filter(cls.id.in_(hit_ids)).order_by(db.case(when, value=cls.id))
-        # 再遍历 BaseQuery，将要搜索的字段值中关键词高亮
+        # Traverse BaseQuery again, highlight the keyword in the field value to be searched
         for obj in hits_basequery:
             for field, need_highlight in obj.__searchable__:
-                if need_highlight:  # 只有设置为 True 的字段才高亮关键字
-                    source = getattr(obj, field)  # 原字段的值
-                    highlight_source = es_highlight(source, highlights)  # 关键字高亮后的字段值
+                if need_highlight:  # Only fields set to True will highlight keywords
+                    source = getattr(obj, field)  # Original field value
+                    highlight_source = es_highlight(source, highlights)  # Field value after keyword highlighting
                     setattr(obj, field, highlight_source)
 
         return total, hits_basequery
 
     @classmethod
     def receive_after_insert(cls, mapper, connection, target):
-        '''监听 SQLAlchemy 'after_insert' 事件
-        请参考: https://docs.sqlalchemy.org/en/13/orm/events.html#mapper-events'''
+        '''Monitor SQLAlchemy'after_insert' event
+        Please refer to: https://docs.sqlalchemy.org/en/13/orm/events.html#mapper-events'''
         add_to_index(target.__tablename__, target)
 
     @classmethod
@@ -57,12 +57,12 @@ class SearchableMixin(object):
 
     @classmethod
     def receive_after_delete(cls, mapper, connection, target):
-        '''监听 SQLAlchemy 'after_delete' 事件'''
+        '''Listen for SQLAlchemy'after_delete' event'''
         remove_from_index(target.__tablename__, target)
 
     @classmethod
     def reindex(cls):
-        '''刷新指定数据模型中的所有数据的索引'''
+        '''Refresh the index of all data in the specified data mode'''
         for obj in cls.query:
             add_to_index(cls.__tablename__, obj)
 
@@ -74,8 +74,8 @@ db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 class PaginatedAPIMixin(object):
     @staticmethod
     def to_collection_dict(query, page, per_page, endpoint, **kwargs):
-        # 如果当前没有任何资源时，或者前端请求的 page 越界时，都会抛出 404 错误
-        # 由 @bp.app_errorhandler(404) 自动处理，即响应 JSON 数据：{ error: "Not Found" }
+        # If there are currently no resources, or the front-end requested page is out of bounds, a 404 error will be thrown
+        # Automatically processed by @bp.app_errorhandler(404), that is, in response to JSON data: {error: "Not Found"}
         resources = query.paginate(page, per_page)
         data = {
             'items': [item.to_dict() for item in resources.items],
@@ -97,7 +97,7 @@ class PaginatedAPIMixin(object):
         return data
 
 
-# 粉丝关注他人
+# Follow others
 followers = db.Table(
     'followers',
     db.Column('follower_id', db.Integer, db.ForeignKey('users.id')),
@@ -105,7 +105,6 @@ followers = db.Table(
     db.Column('timestamp', db.DateTime, default=datetime.utcnow)
 )
 
-# 评论点赞
 comments_likes = db.Table(
     'comments_likes',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
@@ -113,7 +112,7 @@ comments_likes = db.Table(
     db.Column('timestamp', db.DateTime, default=datetime.utcnow)
 )
 
-# 黑名单(user_id 屏蔽 block_id)
+
 blacklist = db.Table(
     'blacklist',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
@@ -121,7 +120,7 @@ blacklist = db.Table(
     db.Column('timestamp', db.DateTime, default=datetime.utcnow)
 )
 
-# 喜欢文章
+
 posts_likes = db.Table(
     'posts_likes',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
@@ -129,24 +128,31 @@ posts_likes = db.Table(
     db.Column('timestamp', db.DateTime, default=datetime.utcnow)
 )
 
+properties_likes = db.Table(
+    'properties_likes',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
+    db.Column('property_id', db.Integer, db.ForeignKey('properties.id')),
+    db.Column('timestamp', db.DateTime, default=datetime.utcnow)
+)
+
 
 class Permission:
-    '''权限认证中的各种操作，对应二进制的位，比如
-    FOLLOW: 0b00000001，转换为十六进制为 0x01
-    COMMENT: 0b00000010，转换为十六进制为 0x02
-    WRITE: 0b00000100，转换为十六进制为 0x04
+    '''Various operations in authorization authentication correspond to binary bits, such as
+    FOLLOW: 0b00000001, converted to hexadecimal to 0x01
+    COMMENT: 0b00000010, converted to hexadecimal to 0x02
+    WRITE: 0b00000100, converted to hexadecimal to 0x04
     ...
-    ADMIN: 0b10000000，转换为十六进制为 0x80
+    ADMIN: 0b10000000, converted to hexadecimal to 0x80
 
-    中间还预留了第 4、5、6、7 共4位二进制位，以备后续增加操作权限
+    The 4th, 5th, 6th, and 7th binary bits are reserved in the middle to prepare for the subsequent increase of operation authority
     '''
-    # 关注其它用户的权限
+    # Follow the permissions of other users
     FOLLOW = 0x01
-    # 发表评论、评论点赞与踩的权限
+    # Permission to post comments, comment likes and dislikes
     COMMENT = 0x02
-    # 撰写文章的权限
+    # Permission to write articles
     WRITE = 0x04
-    # 管理网站的权限(对应管理员角色)
+    # Manage website permissions (corresponding to administrator roles)
     ADMIN = 0x80
 
 
@@ -154,9 +160,9 @@ class Role(PaginatedAPIMixin, db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     slug = db.Column(db.String(255), unique=True)
-    name = db.Column(db.String(255))  # 角色名称
-    default = db.Column(db.Boolean, default=False, index=True)  # 当新增用户时，是否将当前角色作为默认角色赋予新用户
-    permissions = db.Column(db.Integer)  # 角色拥有的权限，各操作对应一个二进制位，能执行某项操作的角色，其位会被设为 1
+    name = db.Column(db.String(255))  # Role Name
+    default = db.Column(db.Boolean, default=False, index=True)  # When adding a new user, whether to assign the current role as the default role to the new user
+    permissions = db.Column(db.Integer)  # The permissions that the role has, each operation corresponds to a binary bit, and the bit that can perform a certain operation is set to 1
     users = db.relationship('User', backref='role', lazy='dynamic')
 
     def __init__(self, **kwargs):
@@ -166,14 +172,14 @@ class Role(PaginatedAPIMixin, db.Model):
 
     @staticmethod
     def insert_roles():
-        '''应用部署时，应该主动执行此函数，添加以下角色
-        注意: 未登录的用户，可以浏览，但不能评论或点赞等
-        shutup:        0b0000 0000 (0x00) 用户被关小黑屋，收回所有权限
-        reader:        0b0000 0011 (0x03) 读者，可以关注别人、评论与点赞，但不能发表文章
-        author:        0b0000 0111 (0x07) 作者，可以关注别人、评论与点赞，发表文章
-        administrator: 0b1000 0111 (0x87) 超级管理员，拥有全部权限
+        '''When the application is deployed, you should actively execute this function and add the following roles
+        Note: Users who are not logged in can browse, but cannot comment or like, etc.
+        shutup: 0b0000 0000 (0x00) The user is shut in a small black room and all permissions are withdrawn
+        reader: 0b0000 0011 (0x03) Readers, can follow others, comment and like, but cannot publish articles
+        author: 0b0000 0111 (0x07) Author, can follow others, comment and like, publish articles
+        administrator: 0b1000 0111 (0x87) Super administrator, with all rights
 
-        以后如果要想添加新角色，或者修改角色的权限，修改 roles 数组，再运行函数即可
+        In the future, if you want to add a new role, or modify the permissions of a role, modify the roles array, and then run the function
         '''
         roles = {
             'shutup': ('Little Black House', ()),
@@ -208,11 +214,11 @@ class Role(PaginatedAPIMixin, db.Model):
             self.permissions -= perm
 
     def get_permissions(self):
-        '''获取角色的具体操作权限列表'''
+        '''Get a list of specific operation permissions of the role'''
         p = [(Permission.FOLLOW, 'follow'), (Permission.COMMENT, 'comment'), (Permission.WRITE, 'write'), (Permission.ADMIN, 'admin')]
-        # 过滤掉没有权限，注意不能用 for 循环，因为遍历列表时删除元素可能结果并不是你想要的，参考: https://segmentfault.com/a/1190000007214571
+        #Filter out without permission. Note that you cannot use for loops, because deleting elements when traversing the list may not result in what you want, reference: : https://segmentfault.com/a/1190000007214571
         new_p = filter(lambda x: self.has_permission(x[0]), p)
-        return ','.join([x[1] for x in new_p])  # 用逗号拼接成str
+        return ','.join([x[1] for x in new_p])  #Use commas to splice into str
 
     def to_dict(self):
         data = {
@@ -240,80 +246,84 @@ class Role(PaginatedAPIMixin, db.Model):
 
 
 class User(PaginatedAPIMixin, db.Model):
-    # 设置数据库表名，Post模型中的外键 user_id 会引用 users.id
+    # Set the database table name, the foreign key user_id in the Post model will reference users.id
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
-    password_hash = db.Column(db.String(128))  # 不保存原始密码
+    password_hash = db.Column(db.String(128))  # Do not save original password
     name = db.Column(db.String(64))
     location = db.Column(db.String(64))
     about_me = db.Column(db.Text())
     image = db.Column(db.String(128), nullable=True)#anhlbt
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
-    # 反向引用，直接查询出当前用户的所有博客文章; 同时，Post实例中会有 author 属性
-    # cascade 用于级联删除，当删除user时，该user下面的所有posts都会被级联删除
+    # Backreference, directly query all blog posts of the current user; at the same time, there will be an author attribute in the Post instance
+    # cascade is used for cascade deletion. When a user is deleted, all posts under the user will be cascade deleted
     posts = db.relationship('Post', backref='author', lazy='dynamic',
                             cascade='all, delete-orphan')
-    # followeds 是该用户关注了哪些用户列表
-    # followers 是该用户的粉丝列表
+    properties = db.relationship('Property', backref='author', lazy='dynamic',
+                            cascade='all, delete-orphan')
+
+    # followeds is a list of users followed by this user
+    # followers is the user's follower list
     followeds = db.relationship(
         'User', secondary=followers,
         primaryjoin=(followers.c.follower_id == id),
         secondaryjoin=(followers.c.followed_id == id),
         backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
-    # 用户发表的评论列表
+    # List of comments posted by users
     comments = db.relationship('Comment', backref='author', lazy='dynamic',
                                cascade='all, delete-orphan')
-    # 用户最后一次查看 收到的评论 页面的时间，用来判断哪些收到的评论是新的
+    # The last time the user viewed the received comments page, used to determine which received comments are new
     last_recived_comments_read_time = db.Column(db.DateTime)
-    # 用户最后一次查看 用户的粉丝 页面的时间，用来判断哪些粉丝是新的
+    # The time the user last viewed the user’s fan page, used to determine which fans are new
     last_follows_read_time = db.Column(db.DateTime)
-    # 用户最后一次查看 收到的文章被喜欢 页面的时间，用来判断哪些喜欢是新的
+    # Last time the user viewed the article received and was liked the page time, used to determine which likes are new
     last_posts_likes_read_time = db.Column(db.DateTime)
-    # 用户最后一次查看 收到的评论点赞 页面的时间，用来判断哪些点赞是新的
+    last_properties_likes_read_time = db.Column(db.DateTime)
+    # The last time the user viewed the comments received and liked the page time, used to determine which of the likes are new
     last_comments_likes_read_time = db.Column(db.DateTime)
-    # 用户最后一次查看 关注的人的博客 页面的时间，用来判断哪些文章是新的
+    # The last time the user viewed the blog page of the person he followed, used to determine which articles are new
     last_followeds_posts_read_time = db.Column(db.DateTime)
-    # 用户的通知
+    # User notification
     notifications = db.relationship('Notification', backref='user',
                                     lazy='dynamic', cascade='all, delete-orphan')
-    # 用户发送的私信
+    # Private messages sent by users
     messages_sent = db.relationship('Message', foreign_keys='Message.sender_id',
                                     backref='sender', lazy='dynamic',
                                     cascade='all, delete-orphan')
-    # 用户接收的私信
+    # Private messages received by users
     messages_received = db.relationship('Message',
                                         foreign_keys='Message.recipient_id',
                                         backref='recipient', lazy='dynamic',
                                         cascade='all, delete-orphan')
-    # 用户最后一次查看私信的时间
+    # The last time the user viewed the private message
     last_messages_read_time = db.Column(db.DateTime)
-    # harassers 骚扰者(被拉黑的人)
-    # sufferers 受害者
+    # Harasser (a hacked person)
+    # sufferers victim
     harassers = db.relationship(
         'User', secondary=blacklist,
         primaryjoin=(blacklist.c.user_id == id),
         secondaryjoin=(blacklist.c.block_id == id),
         backref=db.backref('sufferers', lazy='dynamic'), lazy='dynamic')
-    # 用户注册后，需要先确认邮箱
+    #After user registration, you need to confirm the email
     confirmed = db.Column(db.Boolean, default=False)
-    # 用户所属的角色
+    # The role the user belongs to
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    # 用户的RQ后台任务
+    # User's RQ background task
     tasks = db.relationship('Task', backref='user', lazy='dynamic')
 
     def set_password(self, password):
-        '''设置用户密码，保存为 Hash 值'''
+        '''Set user password and save as Hash value'''
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        '''验证密码与保存的 Hash 值是否匹配'''
+        '''Verify that the password matches the saved Hash value'''
         return check_password_hash(self.password_hash, password)
 
     def avatar(self, size):
-        '''用户头像'''
+        '''profile picture'''
         digest = md5(self.email.lower().encode('utf-8')).hexdigest()
         return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(digest, size)
 
@@ -331,6 +341,8 @@ class User(PaginatedAPIMixin, db.Model):
             'followers_count': self.followers.count(),
             'posts_count': self.posts.count(),
             'followeds_posts_count': self.followeds_posts().count(),
+            'properties_count': self.properties.count(),
+            # 'followeds_properties_count': self.followeds_properties().count(),
             'comments_count': self.comments.count(),
             'confirmed': self.confirmed,
             'role_id': self.role_id,
@@ -341,6 +353,7 @@ class User(PaginatedAPIMixin, db.Model):
                 'followeds': url_for('api.get_followeds', id=self.id),
                 'followers': url_for('api.get_followers', id=self.id),
                 'posts': url_for('api.get_user_posts', id=self.id),
+                'properties': url_for('api.get_user_properties', id=self.id),
                 'followeds_posts': url_for('api.get_user_followeds_posts', id=self.id),
                 'comments': url_for('api.get_user_comments', id=self.id),
                 'role': url_for('api.get_role', id=self.role_id)
@@ -364,12 +377,12 @@ class User(PaginatedAPIMixin, db.Model):
                     self.role = Role.query.filter_by(default=True).first()
 
     def ping(self):
-        '''更新用户的最后访问时间'''
+        '''Update user's last access time'''
         self.last_seen = datetime.utcnow()
         db.session.add(self)
 
     def get_jwt(self, expires_in=3600):
-        '''用户登录后，发放有效的 JWT'''
+        '''After the user logs in, a valid JWT is issued'''
         now = datetime.utcnow()
         payload = {
             'user_id': self.id,
@@ -388,7 +401,7 @@ class User(PaginatedAPIMixin, db.Model):
 
     @staticmethod
     def verify_jwt(token):
-        '''验证 JWT 的有效性'''
+        '''verify the validity of the JWT'''
         try:
             payload = jwt.decode(
                 token,
@@ -409,27 +422,27 @@ class User(PaginatedAPIMixin, db.Model):
             followers.c.followed_id == user.id).count() > 0
 
     def follow(self, user):
-        '''当前用户开始关注 user 这个用户对象'''
+        '''The current user starts to pay attention to the user object user'''
         if not self.is_following(user):
             self.followeds.append(user)
 
     def unfollow(self, user):
-        '''当前用户取消关注 user 这个用户对象'''
+        '''The current user unfollows the user object user'''
         if self.is_following(user):
             self.followeds.remove(user)
 
     def followeds_posts(self):
-        '''获取当前用户的关注者的所有博客列表'''
+        '''Get a list of all blogs of the current user's followers'''
         followed = Post.query.join(
             followers, (followers.c.followed_id == Post.author_id)).filter(
                 followers.c.follower_id == self.id)
-        # 包含当前用户自己的博客列表
+        # Contains the current user’s own blog list
         # own = Post.query.filter_by(user_id=self.id)
         # return followed.union(own).order_by(Post.timestamp.desc())
         return followed.order_by(Post.timestamp.desc())
 
     def add_notification(self, name, data):
-        '''给用户实例对象增加通知'''
+        '''Add notifications to user instance objects'''
         # 如果具有相同名称的通知已存在，则先删除该通知
         self.notifications.filter_by(name=name).delete()
         # 为用户添加通知，写入数据库
@@ -438,96 +451,114 @@ class User(PaginatedAPIMixin, db.Model):
         return n
 
     def new_recived_comments(self):
-        '''用户收到的新评论计数
-        包括:
-        1. 用户的所有文章下面新增的评论
-        2. 用户发表的评论(或下面的子孙)被人回复了
+        '''Count of new comments received by users
+        include:
+        1. New comments added under all posts of the user
+        2. User comments (or descendants below) were replied
         '''
         last_read_time = self.last_recived_comments_read_time or datetime(1900, 1, 1)
-        # 用户发布的所有文章
+        # All articles posted by users
         user_posts_ids = [post.id for post in self.posts.all()]
-        # 用户文章下面的新评论, 即评论的 post_id 在 user_posts_ids 集合中，且评论的 author 不是自己(文章的作者)
+        # The new comment below the user post, that is, the post_id of the comment is in the user_posts_ids collection, and the author of the comment is not yourself (the author of the post)        
         q1 = set(Comment.query.filter(Comment.post_id.in_(user_posts_ids), Comment.author != self).all())
 
-        # 用户发表的评论被人回复了，找到每个用户评论的所有子孙
+        # The user’s comment was replied to, find all the descendants of each user’s comment
         q2 = set()
         for c in self.comments:
             q2 = q2 | c.get_descendants()
-        q2 = q2 - set(self.comments.all())  # 除去子孙中，用户自己发的(因为是多级评论，用户可能还会在子孙中盖楼)，自己回复的不用通知
-        # 用户收到的总评论集合为 q1 与 q2 的并集
+        q2 = q2 - set(self.comments.all())  # Excluding the children and grandchildren, the users posted by themselves (because it is a multi-level comment, the user may also build a building in the children and grandchildren), and there is no need to notify if you reply by yourself
+        #The total set of comments received by users is the union of q1 and q2
         recived_comments = q1 | q2
-        # 最后，再过滤掉 last_read_time 之前的评论
+        # Finally, filter out the comments before last_read_time
         return len([c for c in recived_comments if c.timestamp > last_read_time])
 
     def new_follows(self):
-        '''用户的新粉丝计数'''
+        '''User's new fan count'''
         last_read_time = self.last_follows_read_time or datetime(1900, 1, 1)
         return self.followers.filter(followers.c.timestamp > last_read_time).count()
 
     def new_comments_likes(self):
-        '''用户收到的新评论点赞计数'''
+        '''Count of new comments received by users'''
         last_read_time = self.last_comments_likes_read_time or datetime(1900, 1, 1)
-        # 当前用户发表的所有评论当中，哪些被点赞了
+        # Among all the comments posted by the current user, which ones are liked
         comments = self.comments.join(comments_likes).all()
-        # 新的点赞记录计数
+        # New like record count
         new_likes_count = 0
         for c in comments:
-            # 获取点赞时间
+            # Time to get likes
             for u in c.likers:
-                if u != self:  # 用户自己点赞自己的评论不需要被通知
+                if u != self:  # Users who like their own comments do not need to be notified
                     res = db.engine.execute("select * from comments_likes where user_id={} and comment_id={}".format(u.id, c.id))
-                    timestamp = datetime.strptime(list(res)[0][2], '%Y-%m-%d %H:%M:%S.%f')
-                    # 判断本条点赞记录是否为新的
+                    timestamp = datetime.strptime(str(list(res)[0][2]), '%Y-%m-%d %H:%M:%S.%f') #add str
+                    # Determine whether this like record is new
                     if timestamp > last_read_time:
                         new_likes_count += 1
         return new_likes_count
 
     def new_followeds_posts(self):
-        '''用户关注的人的新发布的文章计数'''
+        '''Count of newly published articles by people that the user follows'''
         last_read_time = self.last_followeds_posts_read_time or datetime(1900, 1, 1)
         return self.followeds_posts().filter(Post.timestamp > last_read_time).count()
 
     def new_recived_messages(self):
-        '''用户未读的私信计数'''
+        '''User unread private messages count'''
         last_read_time = self.last_messages_read_time or datetime(1900, 1, 1)
         return Message.query.filter_by(recipient=self).filter(
             Message.timestamp > last_read_time).count()
 
     def is_blocking(self, user):
-        '''判断当前用户是否已经拉黑了 user 这个用户对象，如果拉黑了，下面表达式左边是1，否则是0'''
+        '''Determine whether the current user has blacked the user object, if it is blacked, the left side of the following expression is 1, otherwise it is 0'''
         return self.harassers.filter(
             blacklist.c.block_id == user.id).count() > 0
 
     def block(self, user):
-        '''当前用户开始拉黑 user 这个用户对象'''
+        '''The current user started to block the user object user'''
         if not self.is_blocking(user):
             self.harassers.append(user)
 
     def unblock(self, user):
-        '''当前用户取消拉黑 user 这个用户对象'''
+        '''The current user unblocks the user object'''
         if self.is_blocking(user):
             self.harassers.remove(user)
 
     def new_posts_likes(self):
-        '''用户收到的文章被喜欢的新计数'''
+        '''The new count of articles received by users that are liked'''
         last_read_time = self.last_posts_likes_read_time or datetime(1900, 1, 1)
-        # 当前用户发布的文章当中，哪些文章被喜欢了
+        # Among the articles posted by current users, which articles are liked
         posts = self.posts.join(posts_likes).all()
-        # 新的喜欢记录计数
+        # New favorite record count
         new_likes_count = 0
         for p in posts:
-            # 获取喜欢时间
+            # Get like time
             for u in p.likers:
-                if u != self:  # 用户自己喜欢自己的文章不需要被通知
+                if u != self:  # Users do not need to be notified if they like their articles
                     res = db.engine.execute("select * from posts_likes where user_id={} and post_id={}".format(u.id, p.id))
+                    timestamp = datetime.strptime(str(list(res)[0][2]), '%Y-%m-%d %H:%M:%S.%f') #add str
+                    # Determine whether this favorite record is new
+                    if timestamp > last_read_time:
+                        new_likes_count += 1
+        return new_likes_count
+
+    def new_properties_likes(self):
+        '''The new count of articles received by users that are liked'''
+        last_read_time = self.last_properties_likes_read_time or datetime(1900, 1, 1)
+        #Among the articles posted by current users, which articles are liked
+        properties = self.properties.join(properties_likes).all()
+        # New favorite record count
+        new_likes_count = 0
+        for p in properties:
+            # Get like time
+            for u in p.likers:
+                if u != self:  # Users do not need to be notified if they like their articles
+                    res = db.engine.execute("select * from properties_likes where user_id={} and property_id={}".format(u.id, p.id))
                     timestamp = datetime.strptime(str(list(res)[0][2]), '%Y-%m-%d %H:%M:%S.%f')
-                    # 判断本条喜欢记录是否为新的
+                    #  Determine whether this favorite record is new
                     if timestamp > last_read_time:
                         new_likes_count += 1
         return new_likes_count
 
     def generate_confirm_jwt(self, expires_in=3600):
-        '''生成确认账户的 JWT'''
+        '''Generate a JWT' to confirm the account'''
         now = datetime.utcnow()
         payload = {
             'confirm': self.id,
@@ -540,7 +571,7 @@ class User(PaginatedAPIMixin, db.Model):
             algorithm='HS256').decode('utf-8')
 
     def verify_confirm_jwt(self, token):
-        '''用户点击确认邮件中的URL后，需要检验 JWT，如果检验通过，则把新添加的 confirmed 属性设为 True'''
+        '''After the user clicks the URL in the confirmation email, the JWT needs to be checked. If the check passes, the newly added confirmed attribute is set to True'''
         try:
             payload = jwt.decode(
                 token,
@@ -558,7 +589,7 @@ class User(PaginatedAPIMixin, db.Model):
         return True
 
     def generate_reset_password_jwt(self, expires_in=3600):
-        '''生成重置账户密码的 JWT'''
+        '''Generate reset account password JWT'''
         now = datetime.utcnow()
         payload = {
             'reset_password': self.id,
@@ -572,8 +603,8 @@ class User(PaginatedAPIMixin, db.Model):
 
     @staticmethod
     def verify_reset_password_jwt(token):
-        '''用户点击重置密码邮件中的URL后，需要检验 JWT
-        如果检验通过，则返回 JWT 中存储的 id 所对应的用户实例'''
+        '''After the user clicks the URL in the password reset email, it needs to be checked JWT
+        If the check is passed, return the user instance corresponding to the id stored in the JWT'''
         try:
             payload = jwt.decode(
                 token,
@@ -649,12 +680,12 @@ class Post(SearchableMixin, PaginatedAPIMixin, db.Model):
     json_book = db.Column(JsonEncodedDict)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     views = db.Column(db.Integer, default=0)
-    # 外键, 直接操纵数据库当user下面有posts时不允许删除user，下面仅仅是 ORM-level “delete” cascade
-    # db.ForeignKey('users.id', ondelete='CASCADE') 会同时在数据库中指定 FOREIGN KEY level “ON DELETE” cascade
+    # Foreign keys, directly manipulate the database. When there are posts under the user, it is not allowed to delete the user. The following is just an ORM-level “delete” cascade
+    # db.ForeignKey('users.id', ondelete='CASCADE') Will also specify the FOREIGN KEY level "ON DELETE" cascade in the database
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     comments = db.relationship('Comment', backref='post', lazy='dynamic',
                                cascade='all, delete-orphan')
-    # 博客文章与喜欢/收藏它的人是多对多关系
+    # A blog post has a many-to-many relationship with people who like/bookmark it
     likers = db.relationship('User', secondary=posts_likes, backref=db.backref('liked_posts', lazy='dynamic'), lazy='dynamic')
 
     def __repr__(self):
@@ -714,16 +745,16 @@ class Post(SearchableMixin, PaginatedAPIMixin, db.Model):
                 setattr(self, field, data[field])
 
     def is_liked_by(self, user):
-        '''判断用户 user 是否已经收藏过该文章'''
+        '''Determine whether user user has bookmarked the articleer user has bookmarked the article'''
         return user in self.likers
 
     def liked_by(self, user):
-        '''收藏'''
+        '''Favorites'''
         if not self.is_liked_by(user):
             self.likers.append(user)
 
     def unliked_by(self, user):
-        '''取消收藏'''
+        '''Unfavorite'''
         if self.is_liked_by(user):
             self.likers.remove(user)
 
@@ -732,6 +763,149 @@ db.event.listen(Post.body, 'set', Post.on_changed_body)  # body 字段有变化�
 db.event.listen(Post, 'after_insert', Post.receive_after_insert)
 db.event.listen(Post, 'after_delete', Post.receive_after_delete)
 
+class Property(SearchableMixin, PaginatedAPIMixin, db.Model):
+    __tablename__ = 'properties'
+    __searchable__ = [('title', True), ('address', True), ('nearby', False)]
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200))
+    slug = db.Column(db.String(200))
+    price = db.Column(db.Float)
+    promoted = db.Column(db.String(50))
+    features = db.Column(postgresql.ARRAY(db.Text))
+    purpose = db.Column(db.Enum(*['Sale', 'Rent', 'Other'], name='purpose'), default='Sale')
+    type = db.Column(db.Enum(*['Apartment', 'Studio', 'House', 'Commercial', 'Land', 'Office', 'Other'], name='type'), default='House')
+    # image = db.Column(db.String(200))
+    images = db.Column(postgresql.ARRAY(db.String(500)))
+    bedroom = db.Column(db.Integer)
+    bathroom = db.Column(db.Integer)
+    city = db.Column(db.String(200))
+    city_slug = db.Column(db.String(200))
+    address = db.Column(db.String(500))
+    province =  db.Column(db.String(50))
+    district =  db.Column(db.String(50))
+    ward =  db.Column(db.String(50))
+    area =  db.Column(db.String(200))
+    total_area_sq_m =  db.Column(db.String(10))
+    used_area_sq_m =  db.Column(db.String(10))
+    direction = db.Column(db.String(50))
+    agent_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    description = db.Column(db.String(500))
+    video = db.Column(db.String(200))
+    floor_plan = db.Column(db.String(200))
+    latitude = db.Column(db.String(50))
+    longtitude = db.Column(db.String(50))
+    nearby = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    post_at = db.Column(db.DateTime, default=datetime.utcnow)
+    views = db.Column(db.Integer)
+    likers = db.relationship('User', secondary=properties_likes, backref=db.backref('liked_properties', lazy='dynamic'), lazy='dynamic')
+
+    def __repr__(self):
+        return '<Property {}>'.format(self.title)
+
+    def to_dict(self):
+        data = {
+            'id': self.id,
+            'title': self.title,
+            
+            'slug' :self.slug,
+            'price': self.price,
+            'promoted' : self.promoted,
+            'features' : self.features,
+            'purpose' : self.purpose,
+            'type' : self.type,
+            # image = db.Column(db.String(200))
+            'images' :self.images,
+            'bedroom' :self.bedroom,
+            'bathroom': self.bathroom,
+            'city': self.city,
+            'city_slug' :self.city_slug,
+            'address': self.address,
+            'province': self.province,
+            'district': self.district,
+            'ward': self.ward,
+            'total_area_sq_m':self.total_area_sq_m,
+            'used_area_sq_m': self.used_area_sq_m,
+            'direction': self.direction,
+            'area' :self.area,
+            'agent_id' :self.agent_id,
+            'description': self.description,
+            'video' :self.video,
+            'floor_plan' :self.floor_plan,
+            'latitude' :self.latitude,
+            'longtitude': self.longtitude,
+            'nearby' :self.nearby,
+            'created_at' :self.created_at,
+            'updated_at' : self.updated_at,
+            'post_at': self.post_at,
+            'views': self.views,
+            'likers_id': [user.id for user in self.likers],
+            'likers': [
+                {
+                    'id': user.id,
+                    'username': user.username,
+                    'name': user.name,
+                    'avatar': user.avatar(128)
+                } for user in self.likers
+            ],
+            'author': {
+                'id': self.author.id,
+                'username': self.author.username,
+                'name': self.author.name,
+                'avatar': self.author.avatar(128)
+            },
+            'likers_count': self.likers.count(),
+            # 'comments_count': self.comments.count(),
+            '_links': {
+                'self': url_for('api.get_property', id=self.id),
+                'author_url': url_for('api.get_user', id=self.agent_id)
+                # 'comments': url_for('api.get_property_comments', id=self.id)
+                
+            }
+            
+            # 'source': self.source,
+            # 'tags': self.tags,
+            # 'topic': self.topic,
+            # 'audio_links': self.audio_links
+        }
+        return data
+
+
+    def from_dict(self, data):
+        for field in ['title', 'description', 'price','promoted', 'features', 'purpose', 'type','images',\
+                       'bedroom', 'bathroom','city', 'address','province', 'district', 'ward', \
+                        'total_area_sq_m', 'used_area_sq_m', 'direction', 'area', 'agent_id','video','floor_plan',\
+                        'latitude','longtitude', 'nearby','created_at', 'updated_at', 'views', 'post_at']:     
+            if field in data:
+                setattr(self, field, data[field])
+                # if field != 'post_at':
+                #     setattr(self, field, data[field])
+                # else:
+                    # setattr(self, field, datetime.strptime(data[field], '%Y-%m-%d %H:%M:%S.%f'))
+                    # setattr(self, field, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    # setattr(self, field, None)
+    def is_liked_by(self, user):
+        '''Determine whether user user has bookmarked the article'''
+        return user in self.likers
+
+    def liked_by(self, user):
+        '''favorites'''
+        if not self.is_liked_by(user):
+            self.likers.append(user)
+
+    def unliked_by(self, user):
+        '''unfavorites'''
+        if self.is_liked_by(user):
+            self.likers.remove(user)
+
+
+# db.event.listen(Property.title, 'set', Property.on_changed_body)  # body 字段有变化时，执行 on_changed_body() 方法
+db.event.listen(Property, 'after_insert', Property.receive_after_insert)
+db.event.listen(Property, 'after_delete', Property.receive_after_delete)                    
+                     
+                    
+                        
 
 class Comment(PaginatedAPIMixin, db.Model):
     __tablename__ = 'comments'
@@ -767,7 +941,7 @@ class Comment(PaginatedAPIMixin, db.Model):
         return data
 
     def get_ancestors(self):
-        '''获取评论的所有祖先'''
+        '''Get all ancestors of comments'''
         data = []
 
         def ancestors(comment):
@@ -814,21 +988,21 @@ class Comment(PaginatedAPIMixin, db.Model):
                 setattr(self, field, data[field])
 
     def is_liked_by(self, user):
-        '''判断用户 user 是否已经对该评论点过赞'''
+        '''Determine whether user user has liked the comment'''
         return user in self.likers
 
     def liked_by(self, user):
-        '''点赞'''
+        '''like'''
         if not self.is_liked_by(user):
             self.likers.append(user)
 
     def unliked_by(self, user):
-        '''取消点赞'''
+        '''Unlike'''
         if self.is_liked_by(user):
             self.likers.remove(user)
 
 
-class Notification(db.Model):  # 不需要分页
+class Notification(db.Model):  # No need for pagination
     __tablename__ = 'notifications'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), index=True)

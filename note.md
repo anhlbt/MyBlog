@@ -34,6 +34,6 @@ images = response.xpath("//*[contains(@class, 'prd-imageBoxLayout ui-border')]//
 image_urls = images.extract()
 image_url = image_urls[0]
 
-
+a
 
 start redis rq: rq worker madblog-tasks

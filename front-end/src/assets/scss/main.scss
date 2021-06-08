@@ -3,3 +3,427 @@
 @import './base/_colors';
 // fonts
 @import './base/_fonts';
+
+@import 'variables';
+@import 'vue-date-pick/dist/vueDatePick.css';
+
+
+/***General style***/
+html {
+    scroll-behavior: smooth;
+}
+
+//Buttons style
+
+.btn-style1 {
+    border: 1px solid $color2;
+    background: linear-gradient(to right,$color1 10%, $color2);
+    background: -moz-linear-gradient(to right,$color1 10%, $color2);
+    background: -webkit-linear-gradient(to right,$color1 10%, $color2);
+    border-radius: 5px;
+    color: #fff!important;
+    text-transform: uppercase!important;
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px 0 rgba(0,0,0, .3);
+    -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0, .3);
+    -moz-box-shadow: 0 2px 8px 0 rgba(0,0,0, .3);
+    transform: background .3s ease-in-out;
+
+    &:hover {
+        background: linear-gradient(to right,$color1 10%,$color1);
+        background: -webkit-linear-gradient(to right,$color1 10%,$color1);
+        background: -moz-linear-gradient(to right,$color1 10%,$color1);
+    }
+}
+
+.btn-outline-style1 {
+    border: 1px solid $color1;
+    text-transform: uppercase;
+    padding: 8px 15px;
+    border-radius: 20px;
+    background: transparent;
+    color: $color1;
+    font-size: 16px;
+    transition: all .3s ease-in-out;
+
+    &:hover {
+        background: $color1;
+        color: #fff;
+    }
+
+    &:focus {
+        outline: none!important;
+    }
+}
+
+.btn-style2 {
+    border: 1px solid $color1;
+    text-transform: uppercase;
+    border-radius: 20px;
+    background: $color1;
+    color: #fff;
+    font-size: 16px;
+    transition: all .3s ease-in-out;
+    width: 95%;
+    margin: auto;
+
+    &:hover {
+        background: transparent;
+        color: $color1;
+    }
+}
+
+.btn-outline-style2 {
+    border: 2px dotted $color1;
+    text-transform: uppercase;
+    padding: 8px 15px;
+    background: #fff;
+    color: $color1;
+    font-size: 16px;
+    transition: all .3s ease-in-out;
+
+    &:hover {
+        background: transparent;
+        color: $color1;
+        box-shadow: 0 6px 12px 0 $color1-light;
+        -webkit-box-shadow: 0 6px 12px 0 $color1-light;
+        -moz-box-shadow: 0 6px 12px 0 $color1-light;
+    }
+
+    &:focus {
+        outline: none!important;
+    }
+}
+
+.btn-style3 {
+    text-transform: uppercase;
+    border-radius: 20px;
+    background: #fff;
+    color: $color1;
+    font-weight: 600;
+    opacity: .9;
+    font-size: 16px;
+    padding: 8px 30px;
+
+}
+//End buttons style
+
+
+//Overlay
+.overlay-style1 {
+    background: linear-gradient(-180deg,rgba(20,20,30,.75) 0%,rgba(20,20,100,.75) 18%,rgba(20,20,100,.75) 32%,rgba(20,20,30,.75) 95%);
+    width: 100%;
+    height: auto;
+    z-index:2;
+}
+//End overlay
+
+//Cards
+.card-transparent {
+    background: #fff;;
+    border-radius: 10px;
+    box-shadow: 0 8px 12px 0 rgba(0,0,0, .3);
+    padding: 25px;
+}
+//End cards
+
+//Forms
+
+.form-control, select {
+        padding: 6px 0;
+        border-radius: 10px!important;
+        border: 1px solid $color1!important;
+        padding-left: 20px;
+
+        &:focus {
+            box-shadow: none!important;
+            border-color: $color2!important;
+            background: #f3f3f3;;
+        }
+    }
+
+form {
+    width: 100%;
+
+    input, select, textarea {
+        // margin: 20px 0;
+        margin-bottom: 20px;
+        padding-left: 20px;
+        
+    }
+
+}
+.custom-select {
+    padding: 6px 0;
+    padding-left: 20px; 
+}
+      
+
+
+.custom-control-input:checked ~ .custom-control-label::before {
+    border-color: $color1!important;
+    background-color: $color1!important;
+}
+
+//Date & time picker
+.vdpComponent.vdpWithInput>input {
+    border: 0!important;
+    font-size: 14px;
+    padding: 8px 0;
+    border-radius: 20px!important;
+    border: 1px solid $color1!important;
+    padding-left: 20px;
+
+    &:focus {
+        box-shadow: none!important;
+        border-color: $color2!important;
+        background: #f3f3f3;
+        outline: 0!important;
+    }
+}
+
+.vdpCell.selected .vdpCellContent {
+    background: $color1;
+}
+//End forms
+
+//Modals
+#modal-video___BV_modal_content_ {
+    background-color: transparent;
+    border: 0;
+
+    header {
+        border: 0;
+
+        .close {
+            color: #fff;
+            font-size: 85px;
+            font-weight: 100;
+        }
+    }
+}
+//End Modal
+
+//Cards
+.property-card {
+    box-shadow: 0 4px 16px -2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.02);
+    -webkit-box-shadow: 0 4px 16px -2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.02);
+    -moz-box-shadow: 0 4px 16px -2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.02);
+    border-radius: 0 0 10px 10px;
+    text-align: center;
+    margin-bottom: 35px;
+    height: 70%!important;
+    margin-left: 25px;
+    padding: 0 10px;
+}
+
+.property-grid-card {
+    box-shadow: 0 4px 16px -2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.02);
+    -webkit-box-shadow: 0 4px 16px -2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.02);
+    -moz-box-shadow: 0 4px 16px -2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.02);
+    border-radius: 0 0 10px 10px;
+    text-align: center;
+    padding-bottom: 10px;
+}
+
+.agent-card {
+    box-shadow: 0 4px 16px -2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.02);
+    -webkit-box-shadow: 0 4px 16px -2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.02);
+    -moz-box-shadow: 0 4px 16px -2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.02);
+    text-align: center;
+    padding: 20px;
+    margin: 35px 10px;
+    border-radius: 12px;
+}
+
+
+
+.property-title {
+    color: #000;
+    &:hover {
+        text-decoration: none!important;
+    }
+}
+//End cards
+
+//Properties badges
+
+.promoted-badge {
+    background: #b92a13;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 5px 12px;
+    height: 30px;
+    border: none;
+    color: #fff;
+    width: 110px;
+    border-bottom-right-radius: 3px;
+    box-shadow: 0 2px 6px -2px rgba(0,0,0,.4);
+    position: absolute;
+    right: 25px;
+    display: inline-block;
+    text-align: center;
+    top: 5px;
+    transition: all 0.3s ease-out 0.3s;
+    left: -5px;
+    z-index: 99;
+
+    &:before {
+        content: "";
+        width: 0;
+        height: 0;
+        border-top: 0 solid transparent;
+        border-bottom: 5px solid transparent;
+        border-right: 5px solid #a9897f;
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+    }
+
+}
+
+.type-badge {
+    position: absolute;
+    background: rgba(255,255,255, .7);
+    top: 45px;
+    right: 5px;
+    color: $color1;
+    border-radius: 20px;
+    padding: 2px 10px;
+    border: 1px dotted $color1;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+.contract-badge {
+    position: absolute;
+    top: 45px;
+    left: 5px;
+    background: rgba(255,255,255, .7);
+    color: $color2;
+    border: 1px dotted $color2;
+    border-radius: 20px;
+    padding: 2px 10px;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+.property-grid-card {
+    .promoted-badge {
+        left: 10px;
+    }
+    .contract-badge {
+       left: 15px; 
+    }
+
+    .type-badge {
+        right: 17px;
+    }
+
+    .to-favorite {
+        right: 20px!important;
+    }
+}
+//End properties badges
+
+//End promoted properties
+
+//Carousel pagination
+.swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-main {
+    background: transparent!important;
+    width: 30px;
+    border: 1px solid $color1;
+    border-radius: 10px;
+}
+//End carousel pagination
+
+//Carousel arrows
+.swiper-button-prev, .swiper-button-next {
+    top: 60%!important;
+}
+//End carousel arrows
+
+// Tabs styling
+.card    {
+    border: 0!important;
+}
+
+.nav-tabs .nav-link.active {
+    border-color: $color1!important;
+    border-radius: 5px 5px 0 0;
+    background-color: $color1-light!important;
+    color: #000;
+    text-transform: uppercase;
+}
+
+.nav-tabs .nav-link {
+    color: #000;
+    text-transform: uppercase;
+    &:hover {
+        border-color: $color1!important
+    }
+}
+//End tabs styling
+
+//Dropdowns
+.dropdown {
+    .btn-secondary {
+        background: transparent;
+        color: #000;
+        border: none;
+
+        &:focus {
+            box-shadow: none;
+        }
+    }
+
+    .dropdown-toggle-split {
+        &:active {
+            background-color: $color1!important;
+            border-color: $color1!important;
+        }
+    }
+
+    a {
+        color: #000;
+        margin: auto 5px;
+
+        &:hover {
+            text-decoration: none;
+        }
+    }
+}
+
+//End dropdowns
+
+//Single property page
+.quick-features .to-favorite {
+    position: relative!important;
+    margin-left: 30px;
+}
+//End single property page 
+
+/***End general style***/
+
+
+/**Mobile general style**/
+@media(max-width: 768px) {
+    #main-nav {
+        .navbar {
+            .b-dropdown {
+                a {
+                    text-align: left;
+                    margin: 0!important;
+                    padding: 0!important;
+                }
+                button {
+                    text-align: left;
+                }
+            }
+        }
+    }
+}
+/**End Mobile style**/

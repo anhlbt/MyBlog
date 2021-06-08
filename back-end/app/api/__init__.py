@@ -2,5 +2,5 @@ from flask import Blueprint
 
 bp = Blueprint('api', __name__)
 
-# 写在最后是为了防止循环导入，ping.py文件也会导入 bp
-from app.api import ping, tokens, errors, roles, users, posts, comments, notifications, messages
+# Written at the end to prevent circular import, ping.py file will also import bp
+from app.api import ping, tokens, errors, roles, users, posts, properties, comments, notifications, messages

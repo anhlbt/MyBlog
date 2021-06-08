@@ -605,7 +605,7 @@ export default {
       })
     },
     onLikeOrUnlikePost (post) {
-      // 用户需要先登录
+      // User needs to log in first
       if (!this.sharedState.is_authenticated) {
         this.$toasted.error('You need to log in to collect articles ...', { icon: 'fingerprint' })
         this.$router.replace({
@@ -926,14 +926,14 @@ export default {
       })
     })
   },
-  // 当路由变化后重新加载数据
+  // Reload data when routing changes
   beforeRouteUpdate (to, from, next) {
     next()
     this.getPost(to.params.id)
     this.getPostComments(to.params.id)
 
-    if (to.params.id != from.params.id) {  // 同一篇文章，点击 TOC 跳转到各级标题时，不要清空 TOC
-      $('#toc').html('')  // 切换不同文章（点击上/下一篇），如果文章内容没有 markdown 需要解析，则需要先清除上个路由的文章的 TOC，不然会残留下来
+    if (to.params.id != from.params.id) {  // For the same article, when you click TOC to jump to all levels of headings, do not clear the TOC
+      $('#toc').html('')  // Switch between different articles (click on the previous/next article), if the article content does not have markdown that needs to be parsed, you need to clear the TOC of the article on the previous route, otherwise it will remain
     }
   },
   mounted () {

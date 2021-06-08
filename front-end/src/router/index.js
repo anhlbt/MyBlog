@@ -4,7 +4,6 @@ import Router from 'vue-router'
 import VueScrollTo from 'vue-scrollto'
 // 首页
 import Home from '@/components/Home'
-import HomeEbook from '@/components/HomeEbook'
 // 用户认证：注册、登录、验证账户、重置密码请求、重置密码
 import Register from '@/components/Auth/Register'
 import Login from '@/components/Auth/Login'
@@ -17,6 +16,7 @@ import Overview from '@/components/Profile/Overview'
 import Followers from '@/components/Profile/Followers'
 import Following from '@/components/Profile/Following'
 import Posts from '@/components/Profile/Posts'
+import Properties from '@/components/Profile/Properties'
 // 用户个人设置
 import Settings from '@/components/Settings/Settings'
 import Profile from '@/components/Settings/Profile'
@@ -26,6 +26,7 @@ import Notification from '@/components/Settings/Notification'
 // 用户资源
 import Resource from '@/components/Resources/Resource'
 import LikedPostsResource from '@/components/Resources/LikedPosts'
+import LikedPropertiesResource from "@/components/Resources/LikedProperties"
 import CommentsResource from '@/components/Resources/CommentsResource'
 import MessagesIndexResource from '@/components/Resources/Messages/Index'
 import SentMessagesResource from '@/components/Resources/Messages/List'
@@ -55,9 +56,14 @@ import AdminComments from '@/components/Admin/Comments'
 import SearchResult from '@/components/SearchResult'
 // 测试与后端连通性
 import Ping from '@/components/Ping'
-import EbookTest from '@/components/EbookTest'
-import TestScroll from '@/components/TestScroll'
-import EbookDetail from '@/components/EbookDetail'
+import RealEstate from '@/components/pages/index.vue'
+import AddProperty from '@/components/pages/addProperty'
+import PropertyDetail from '@/components/pages/propertyDetails'
+// import singleProperty from "@/components/propertyCarousel/singleProperty"
+
+import Contact from '@/components/pages/contact'
+import propertiesFullWidth from '@/components/pages/propertiesFullWidth.vue'
+
 
 Vue.use(Router)
 
@@ -94,11 +100,16 @@ const scrollBehavior = (to, from, savedPosition) => {
 }
 
 const router = new Router({
-  // mode: 'history',  // 文章详情页 TOC 的锚点以数字开头，会被报错不合法: [Vue warn]: Error in nextTick: "SyntaxError: Failed to execute 'querySelector' on 'Document': '#13-git-clone' is not a valid selector."
-  scrollBehavior,  // 不用这个，在需要跳转的改用 vue-scrollto
+// mode:'history', // The anchor point of the TOC on the article details page starts with a number, and an error will be reported as illegal: [Vue warn]: Error in nextTick: "SyntaxError: Failed to execute'querySelector' on'Document': '#13-git-clone' is not a valid selector."
+  scrollBehavior,  //Don't use this, use vue-scrollto when you need to jump
   routes: [
     {
       path: '/',
+      name: 'RealEstate',
+      component: RealEstate
+    },
+    {
+      path: '/posts',
       name: 'Home',
       component: Home
     },
@@ -151,7 +162,8 @@ const router = new Router({
 
         // UserPosts will be rendered inside User's <router-view>
         // when /user/:id/posts is matched
-        { path: 'posts', name: 'UserPosts', component: Posts }
+        { path: 'posts', name: 'UserPosts', component: Posts },
+        { path: 'properties', name: 'UserProperties', component: Properties }
       ],
       meta: {
         requiresAuth: true
@@ -179,7 +191,9 @@ const router = new Router({
       children: [
         { path: '', component: Posts },
         { path: 'posts', name: 'PostsResource', component: Posts },
+        { path: 'properties', name: 'PropertiesResource', component: Properties },
         { path: 'liked-posts', name: 'LikedPostsResource', component: LikedPostsResource },
+        { path: 'liked-properties', name: 'LikedPropertiesResource', component: LikedPropertiesResource },
         { path: 'comments', name: 'CommentsResource', component: CommentsResource },
         { 
           path: 'messages', 
@@ -203,10 +217,7 @@ const router = new Router({
       children: [
         { path: '', component: RecivedComments },
         { path: 'comments', name: 'RecivedComments', component: RecivedComments },
-        { 
-          path: 'messages', 
-          component: MessagesIndex,
-          children: [
+        { path: 'messages', component: MessagesIndex, children: [
             // 默认匹配，哪些人给你发送过私信
             { path: '', name: 'MessagesIndex', component: RecivedMessages },
             // 与某个用户之间的全部历史对话记录
@@ -227,12 +238,6 @@ const router = new Router({
       path: '/post/:id',
       name: 'PostDetail',
       component: PostDetail
-    },
-    {
-      // Ebook details page
-      path: '/ebook/:id',
-      name: 'EbookDetail',
-      component: EbookDetail
     },
     {
       // 管理后台
@@ -265,21 +270,47 @@ const router = new Router({
       component: Ping
     },
     {
-      path: '/ebooktest',
-      name: 'EbookTest',
-      component: EbookTest
+      path: '/realestate',
+      name: 'realestate',
+      component: RealEstate
     },
     {
-      path: '/scroll',
-      name: 'TestScroll',
-      component: TestScroll
+      path: '/addProperty',
+      name: 'AddProperty',
+      component: AddProperty
     },
     {
-      path: '/homeebook',
-      name: 'HomeEbook',
-      component: HomeEbook
+      // Property details page
+      path: '/properties/:id',
+      name: 'PropertyDetail',
+      component: PropertyDetail,
+      meta: { scrollToTop: true }
+
+
     },
-    
+
+    {
+      // 
+      path: '/contact',
+      name: 'Contact',
+      component: Contact
+    },
+    {
+      // 
+      path: '/propertiesFullWidth',
+      name: 'propertiesFullWidth',
+      component: propertiesFullWidth,
+      props:true,
+    },
+
+    {
+      // 
+      path: '/propertiesFullWidth/:purpose/:type',
+      name: 'propertiesFullWidth2',
+      component: propertiesFullWidth,
+      props:true,
+      // props: { searchProperties: false }
+    },
 
   ]
 })

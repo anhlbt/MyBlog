@@ -11,7 +11,7 @@ from app.utils.decorator import permission_required
 @token_auth.login_required
 @permission_required(Permission.COMMENT)
 def create_comment():
-    '''在某篇博客文章下面发表新评论'''
+    '''Post a new comment below a blog post'''
     data = request.get_json()
     if not data:
         return bad_request('You must post JSON data.')
@@ -25,25 +25,25 @@ def create_comment():
     comment.from_dict(data)
     comment.author = g.current_user
     comment.post = post
-    # 必须先添加该评论，后续给各用户发送通知时，User.new_recived_comments() 才能是更新后的值
+    # The comment must be added first, and User.new_recived_comments() can be the updated value when a notification is sent to each user later
     db.session.add(comment)
-    db.session.commit()  # 更新数据库，添加评论记录
-    # 添加评论时:
-    # 1. 如果是一级评论，只需要给文章作者发送新评论通知
-    # 2. 如果不是一级评论，则需要给文章作者和该评论的所有祖先的作者发送新评论通知
+    db.session.commit()  #Update the database, add comment records
+    # When adding a comment:
+    # 1.If it is a first-level comment, just send a new comment notification to the author of the article
+    # 2. If it is not a first-level comment, you need to send a new comment notification to the author of the article and the authors of all ancestors of the comment
     users = set()
-    users.add(comment.post.author)  # 将文章作者添加进集合中
+    users.add(comment.post.author)  # Add the author of the article to the collection
     if comment.parent:
         ancestors_authors = {c.author for c in comment.get_ancestors()}
         users = users | ancestors_authors
-    # 给各用户发送新评论通知
+    # Send a new comment notification to each user
     for u in users:
         u.add_notification('unread_recived_comments_count',
                            u.new_recived_comments())
-    db.session.commit()  # 更新数据库，写入新通知
+    db.session.commit()  # Update database, write new notification
     response = jsonify(comment.to_dict())
     response.status_code = 201
-    # HTTP协议要求201响应包含一个值为新资源URL的Location头部
+    # The HTTP protocol requires the 201 response to contain a Location header whose value is the URL of the new resource
     response.headers['Location'] = url_for('api.get_comment', id=comment.id)
     return response
 
@@ -64,7 +64,7 @@ def get_comments():
 @bp.route('/comments/<int:id>', methods=['GET'])
 @token_auth.login_required
 def get_comment(id):
-    '''返回单个评论'''
+    '''Return a single comment'''
     comment = Comment.query.get_or_404(id)
     return jsonify(comment.to_dict())
 
@@ -72,7 +72,7 @@ def get_comment(id):
 @bp.route('/comments/<int:id>', methods=['PUT'])
 @token_auth.login_required
 def update_comment(id):
-    '''修改单个评论'''
+    '''Edit a single comment'''
     comment = Comment.query.get_or_404(id)
     if g.current_user != comment.author and g.current_user != comment.post.author and not g.current_user.can(Permission.ADMIN):
         return error_response(403)
@@ -89,45 +89,44 @@ def update_comment(id):
 @bp.route('/comments/<int:id>', methods=['DELETE'])
 @token_auth.login_required
 def delete_comment(id):
-    '''删除单个评论'''
+    '''Delete a single comment'''
     comment = Comment.query.get_or_404(id)
     if g.current_user != comment.author and g.current_user != comment.post.author and not g.current_user.can(Permission.ADMIN):
         return error_response(403)
-    # 删除评论时:
-    # 1. 如果是一级评论，只需要给文章作者发送新评论通知
-    # 2. 如果不是一级评论，则需要给文章作者和该评论的所有祖先的作者发送新评论通知
+    # When deleting a comment:
+    # 1. If it is a first-level comment, just send a new comment notification to the author of the article
+    # 2. If it is not a first-level comment, you need to send a new comment notification to the author of the article and the authors of all ancestors of the comment
     users = set()
-    users.add(comment.post.author)  # 将文章作者添加进集合中
+    users.add(comment.post.author)  # Add the author of the article to the collection
     if comment.parent:
         ancestors_authors = {c.author for c in comment.get_ancestors()}
         users = users | ancestors_authors
-    # 必须先删除该评论，后续给各用户发送通知时，User.new_recived_comments() 才能是更新后的值
+    # The comment must be deleted first, and User.new_recived_comments() can be the updated value when sending notifications to each user later
     db.session.delete(comment)
-    db.session.commit()  # 更新数据库，删除评论记录
-    # 给各用户发送新评论通知
+    db.session.commit()  # Update database, delete comment records
+    # Send a new comment notification to each user
     for u in users:
         u.add_notification('unread_recived_comments_count',
                            u.new_recived_comments())
-    db.session.commit()  # 更新数据库，写入新通知
+    db.session.commit()  # Update database, write new notification
     return '', 204
 
 
 ###
-# 评论被点赞或被取消点赞
+# Comments are liked or disliked
 ###
 @bp.route('/comments/<int:id>/like', methods=['GET'])
 @token_auth.login_required
 @permission_required(Permission.COMMENT)
 def like_comment(id):
-    '''点赞评论'''
+    '''Like comment'''
     comment = Comment.query.get_or_404(id)
     comment.liked_by(g.current_user)
     db.session.add(comment)
-    # 切记要先提交，先添加点赞记录到数据库，因为 new_comments_likes() 会查询 comments_likes 关联表
+    # Remember to submit first, and add the likes to the database first, because new_comments_likes() will query the comments_likes association table
     db.session.commit()
-    # 给评论作者发送新点赞通知
-    comment.author.add_notification('unread_comments_likes_count',
-                                    comment.author.new_comments_likes())
+    # Send a new like notification to the comment author
+    comment.author.add_notification('unread_comments_likes_count', comment.author.new_comments_likes())
     db.session.commit()
     return jsonify({
         'status': 'success',
@@ -139,13 +138,13 @@ def like_comment(id):
 @token_auth.login_required
 @permission_required(Permission.COMMENT)
 def unlike_comment(id):
-    '''取消点赞评论'''
+    '''Cancel like comment'''
     comment = Comment.query.get_or_404(id)
     comment.unliked_by(g.current_user)
     db.session.add(comment)
-    # 切记要先提交，先添加点赞记录到数据库，因为 new_comments_likes() 会查询 comments_likes 关联表
+# Remember to submit first, first add the like record to the database, because new_comments_likes() will query the comments_likes association table
     db.session.commit()
-    # 给评论作者发送新点赞通知(需要自动减1)
+# Send a new like notification to the comment author (need to automatically subtract 1)
     comment.author.add_notification('unread_comments_likes_count',
                                     comment.author.new_comments_likes())
     db.session.commit()

@@ -24,30 +24,115 @@
         {{ $t('auth.login.forgot-pass') }}
         <router-link v-bind:to="{ name: 'ResetPasswordRequest' }">{{ $t('auth.login.click-reset') }}</router-link>
     </p>
+    <!-- <v-facebook-login app-id="510247036061913"></v-facebook-login> -->
+    <div class="login">
+      <v-facebook-login
+        v-model="model"
+        app-id="510247036061913"
+        @sdk-init="handleSdkInit"
+      ></v-facebook-login>
+      <button @click="getPosts()">GET POSTS</button>
+    </div>
   </div>
 </template>
 
 <script>
 import store from '../../store'
-
+import VFacebookLogin from 'vue-facebook-login-component'
 export default {
   name: 'Login',  //this is the name of the component
+  components:
+  {
+    VFacebookLogin
+  },
+
   data () {
     return {
+
+      FB: {},
+      model: {},
+      scope: {},
+      userId: null,
+
       sharedState: store.state,
       loginForm: {
         username: '',
         password: '',
-        errors: 0,  // 表单是否在前端验证通过，0 表示没有错误，验证通过
+        errors: 0,  // Whether the form is validated on the front end, 0 means there is no error, and the validation is passed
         usernameError: null,
         passwordError: null
       }
     }
   },
   methods: {
-    onSubmit (e) {
-      this.loginForm.errors = 0  // 重置
 
+    getUserId() {
+      return new Promise((resolve) => {
+        this.FB.api("/me", (response) => {
+          this.userId = response.id;
+          resolve(this.userId);
+          console.log(this.userId);
+        });
+      });
+    },
+    getCertainGroup() {
+      this.FB.api("/548739628937538", (response) => {
+        console.log(response);
+      });
+    },
+    getUserGroups(userId) {
+      this.FB.api(`/${userId}/groups`, (response) => {
+        console.log(response);
+      });
+    },
+    getPosts() {
+      console.log("model status", this.model)
+      console.log("access token ", this.FB.getAuthResponse())
+      this.getUserId().then((userId) => {
+        this.getUserGroups(userId);
+      });
+      this.getCertainGroup();
+      
+
+      console.log(this.FB.getUserID())
+      let UID = this.FB.getUserID()
+      console.log(this.FB.api(
+        UID,
+        {'fields': 'id,name,email,picture'},
+        function (response) {
+          if (response && !response.error) {
+            /* handle the result */
+            console.log(response)
+          }
+        }
+      ))
+    },
+    testData(scope) {
+      console.log(scope.connected);
+    },
+    // handleSdkInit({ FB, scope }) {
+    //   this.FB = FB;
+    //   this.scope = scope;
+    // },
+    handleSdkInit ({ FB, scope }) {
+      this.FB = FB
+      this.scope = scope
+      console.log(this.FB.getUserID())
+      let UID = this.FB.getUserID()
+      console.log(this.FB.api(
+        UID,
+        {'fields': 'id,name,email'},
+        function (response) {
+          if (response && !response.error) {
+            /* handle the result */
+            console.log(response)
+          }
+        }
+      ))
+    },
+
+    onSubmit (e) {
+      this.loginForm.errors = 0  // Reset
       if (!this.loginForm.username) {
         this.loginForm.errors++
         this.loginForm.usernameError = 'Username required.'
@@ -63,12 +148,12 @@ export default {
       }
 
       if (this.loginForm.errors > 0) {
-        // 表单验证没通过时，不继续往下执行，即不会通过 axios 调用后端API
+        // When the form validation fails, the execution will not continue, that is, the back-end API will not be called through axios
         return false
       }
 
       const path = '/api/tokens'
-      // axios 实现Basic Auth需要在config中设置 auth 这个属性即可
+      // Axios needs to set the auth attribute in config to implement Basic Auth.
       this.$axios.post(path, {}, {
         auth: {
           'username': this.loginForm.username,

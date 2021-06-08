@@ -12,6 +12,11 @@
             "click-register": "Click to Register!",
             "forgot-pass": "Forgot Your Password?",
             "click-reset": "Click to Reset It"
+        },
+        "register":{
+            "register":" Register",
+            "email-address": "Email address"
+            
         }
     }
 }

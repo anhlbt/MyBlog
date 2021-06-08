@@ -1,0 +1,21 @@
+{
+    "hi": "Xin chào",
+    "oops": "Oops..",
+    "ok": "OK",
+    "hello": "Xin chào, {name}",
+    "auth": {
+        "login": {
+            "username": "Tên đăng nhập",
+            "password": "Mật khẩu",
+            "sign-in": "Đăng nhập",
+            "new-user": "Người dùng mới?",
+            "click-register": "Nhấn vào đây để đăng kí",
+            "forgot-pass": "Quên mật khẩu?",
+            "click-reset": "Đặt lại mật khẩu mới"
+        },
+        "register":{
+            "register":" Đăng kí",
+            "email-address": "Địa chỉ thư điện tử "
+        }
+    }
+}

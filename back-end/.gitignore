@@ -4,6 +4,8 @@ venv/
 .env
 app.db
 madblog.log*
+uploads/
+logs/
 
 # Unit test / coverage reports
 tmp/

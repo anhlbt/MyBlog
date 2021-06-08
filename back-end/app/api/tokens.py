@@ -8,7 +8,7 @@ from app.extensions import db
 @basic_auth.login_required
 def get_token():
     token = g.current_user.get_jwt()
-    # 每次用户登录（即成功获取 JWT 后），更新 last_seen 时间
+    # Every time a user logs in (ie after successfully obtaining JWT), update the last_seen time
     g.current_user.ping()
     db.session.commit()
     return jsonify({'token': token})

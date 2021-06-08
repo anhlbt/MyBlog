@@ -8,12 +8,13 @@ from flask import Flask, request
 from app.api import bp as api_bp
 from app.api_v2.app import bp as api_v2_bp
 from app.extensions import cors, db, migrate, mail, babel
-
+import ssl
+from flask_sslify import SSLify
 
 def create_app(config_class=None):
     '''Factory Pattern: Create Flask app.'''
     app = Flask(__name__)
-
+    # sslify = SSLify(app)
     # Initialization flask app
     configure_app(app, config_class)
     configure_blueprints(app)
@@ -30,6 +31,7 @@ def create_app(config_class=None):
 
 
 def configure_app(app, config_class):
+    # app.ssl_context=('../cert.pem', '../key.pem')
     app.config.from_object(config_class)
     # Do not check if there is a slash at the end of the route /
     app.url_map.strict_slashes = False

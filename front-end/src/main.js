@@ -6,6 +6,8 @@ import Vue from 'vue'
 // import './plugins/bootstrap-vue'
 import App from './App'
 import router from './router'
+import store2 from './store/index.js';
+
 // 导入配置了全局拦截器后的 axios
 import axios from './http'
 // 导入 moment.js 用来格式化 UTC 时间为本地时间
@@ -31,6 +33,35 @@ import './assets/custom.css'
 import i18n from './i18n'
 // import ScrollLoader from './plugin-entry'
 // Vue.use(ScrollLoaderPlugin)
+
+import BootstrapVue from 'bootstrap-vue'
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
+
+import VueAwesomeSwiper from 'vue-awesome-swiper/dist/ssr'
+// import DatePick from 'vue-date-pick';
+// import vueDropzone from 'vue2-dropzone'
+
+import "vue-date-pick/dist/vueDatePick.css";
+// import 'vue-datetime/dist/vue-datetime.css'
+import 'vue2-dropzone/dist/vue2Dropzone.min.css'
+// Vue.use(DatePick);
+// Vue.use(vueDropzone);
+Vue.use(VueAwesomeSwiper);
+
+Vue.use(BootstrapVue);
+
+import { Bar } from 'vue-chartjs'
+
+export default {
+  extends: Bar,
+  props: ['data', 'options'],
+  mounted () {
+    this.renderChart(this.data, this.options)
+  }
+}
+
+
 
 // register the vue-toasted plugin on vue
 import VueToasted from 'vue-toasted'
@@ -62,6 +93,7 @@ Vue.use(VueSweetalert2)
 import hljs from 'highlight.js'
 // 样式文件，浅色：default, atelier-dune-light  深色：atom-one-dark, atom-one-dark-reasonable, monokai
 import 'highlight.js/styles/atom-one-dark-reasonable.css'
+
 Vue.directive('highlight',function (el) {
   let blocks = el.querySelectorAll('pre code');
   blocks.forEach((block)=>{
@@ -83,6 +115,7 @@ new Vue({
   router,
   i18n,
   components: { App },
-  template: '<App/>'
+  template: '<App/>',
+  store2,
 })
 

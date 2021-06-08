@@ -47,6 +47,7 @@
         <small class="form-control-feedback" v-show="postForm.bodyError">{{ postForm.bodyError }}</small>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
+      
     </form>
 
     <div class="card border-0 g-mb-15">
@@ -278,6 +279,7 @@ export default {
       this.$axios.post(path, payload)
         .then((response) => {
           // handle success
+          console.log("this.postForm.title", this.postForm.title)
           this.getPosts()
           this.$toasted.success('Successed add a new post.', { icon: 'fingerprint' })
           this.postForm.title = '',
