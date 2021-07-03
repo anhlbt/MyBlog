@@ -8,7 +8,7 @@ import store from './store'
 if (process.env.NODE_ENV === 'production') {
   axios.defaults.baseURL = 'http://116.85.19.23:5000';
 } else {
-  axios.defaults.baseURL = 'https://0.0.0.0:5001'; //172.16.2.215   192.168.1.239  localhost
+  axios.defaults.baseURL = 'https://0.0.0.0:5000'; //172.16.2.215   192.168.1.239  localhost
 }
 // axios.defaults.baseURL = 'http://127.0.0.1:5000'
 // axios.defaults.timeout = 5000  //Timeout (ms)

@@ -109,3 +109,28 @@ flask deploy
 **crawl data baomoi**
 cd directory: baomoicrawler
 run: scrapy crawl baomoispider
+
+
+
+run backend with: boot.sh
+
+generate key: openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
+
+
+### error login with 
+change peer or md5 to trust in file:
+/etc/postgresql/10/main/pg_hba.conf
+sudo systemctl restart postgresql
+
+
+generate ssl in frontend & backend:
+openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
+  -keyout key.pem -out cert.pem -extensions san -config \
+  <(echo "[req]"; 
+    echo distinguished_name=req; 
+    echo "[san]"; 
+    echo subjectAltName=DNS:0.0.0.0,DNS:0.0.0.0,IP:0.0.0.0
+    ) \
+  -subj "/CN=0.0.0.0"
+
+  change key: webpack.dev.conf.js

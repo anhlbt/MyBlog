@@ -32,8 +32,8 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     },
     // https: true ,
     https: {
-      key: fs.readFileSync(path.resolve(__dirname, './mkcert/localhost+3-key.pem')),
-      cert: fs.readFileSync(path.resolve(__dirname, './mkcert/localhost+3.pem')),
+      key: fs.readFileSync(path.resolve(__dirname, './mkcert/key.pem')),
+      cert: fs.readFileSync(path.resolve(__dirname, './mkcert/cert.pem')),
     },
     public: 'https://0.0.0.0:8081/',
     hot: false,
@@ -97,7 +97,7 @@ module.exports = new Promise((resolve, reject) => {
       // Add FriendlyErrorsPlugin
       devWebpackConfig.plugins.push(new FriendlyErrorsPlugin({
         compilationSuccessInfo: {
-          messages: [`Your application is running here: http://${devWebpackConfig.devServer.host}:${port}`],
+          messages: [`Your application is running here: https://${devWebpackConfig.devServer.host}:${port}`],
         },
         onErrors: config.dev.notifyOnErrors
         ? utils.createNotifierCallback()

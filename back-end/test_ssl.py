@@ -13,5 +13,5 @@ def ping():
 
 
 if __name__ == '__main__':
-    app.run(ssl_context=('localhost+3.pem', 'localhost+3-key.pem'))
+    app.run(port = 5005,ssl_context=('cert.pem', 'key.pem'))
     # app.run(ssl_context='adhoc')
